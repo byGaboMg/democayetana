@@ -1,0 +1,51 @@
+id,nombre,precio,categoria,descripcion,activo,creado_en
+1,DE LA CASA,55.00,desayunos,2 Huevos al gusto con jamón, salchicha, tocino, chorizo, a la Mexicana, divorciados, rancheros, tirados, al Albañil o con nopales. Incluye fruta, café de olla o té con refill, 1 pan de dulce mini y pan blanco o tortillas,TRUE,2024-05-22
+2,Molletes Especial,65.00,desayunos,Omelette al gusto (2 pz) con molletes y hot cakes con fruta y miel,TRUE,2024-05-22
+3,Chilaquiles Premium,65.00,desayunos,Chilaquiles verdes o rojos con pollo (40 gr) o huevo (2 pz),TRUE,2024-05-22
+4,Pueblito Mágico,75.00,desayunos,(2 pz) Sopes con bistec a la mexicana (120 gr) y (2 pz) huevos estrellados,TRUE,2024-05-22
+5,Huevitos Cayetana,75.00,desayunos,Huevo revuelto (2pz) con bistec (80 gr) bañado en salsa acompañado de chilaquiles y frijoles,TRUE,2024-05-22
+6,Omelette Granjita,75.00,desayunos,Relleno de verdura con queso (50 gr), acompañado de chilaquiles y frijoles,TRUE,2024-05-22
+7,Investigador,75.00,desayunos,Bistec a la mexicana (120 gr) con 1 mini torta de chilaquiles,TRUE,2024-05-22
+8,Gabacho,75.00,desayunos,2 Huevos estrellados o revueltos, 2 hot cakes y 2 tiras de tocino,TRUE,2024-05-22
+9,Del Día,75.00,desayunos,Plato fuerte del día con pan blanco o tortillas y café de olla o té con refill,TRUE,2024-05-22
+10,Comida Corrida,48.00,comidas,Menu a 3 tiempos: Sopa aguada, entremés, guisado a elegir, agua de sabor (1 Lt), tortillas y postre del día,TRUE,2024-05-22
+11,Mollete Sencillo,40.00,antojitos,2 Molletes sencillos (pan cortado por la mitad con frijoles y queso),TRUE,2024-05-22
+12,Mollete con Jamón o Tocino,45.00,antojitos,2 Molletes con jamón (2 reb) o tocino,TRUE,2024-05-22
+13,Mollete con Chorizo,45.00,antojitos,2 Molletes con chorizo (100 gr),TRUE,2024-05-22
+14,Mollete con Bistec o Pollo,50.00,antojitos,2 Molletes con bistec o pollo (100 gr),TRUE,2024-05-22
+15,Chilaquiles Sencillos,40.00,antojitos,Chilaquiles verdes o rojos (150 gr de totopos),TRUE,2024-05-22
+16,Chilaquiles con Pollo,45.00,antojitos,Chilaquiles verdes o rojos con pollo (60 gr),TRUE,2024-05-22
+17,Chilaquiles con Huevo,45.00,antojitos,Chilaquiles verdes o rojos con huevos revueltos o estrellados (2 pz),TRUE,2024-05-22
+18,Chilaquiles con Chorizo,50.00,antojitos,Chilaquiles verdes o rojos con chorizo (80 gr),TRUE,2024-05-22
+19,Chilaquiles con Bistec o Pechuga,60.00,antojitos,Chilaquiles verdes o rojos con bistec o pechuga (100 gr),TRUE,2024-05-22
+20,Torta de Chilaquiles Sencilla,30.00,antojitos,Torta de chilaquiles verdes o rojos (75 gr),TRUE,2024-05-22
+21,Torta de Chilaquiles con Pollo,35.00,antojitos,Torta de chilaquiles con pollo (60 gr),TRUE,2024-05-22
+22,Torta de Chilaquiles con Huevo,35.00,antojitos,Torta de chilaquiles con huevito (1 pz),TRUE,2024-05-22
+23,Torta de Chilaquiles con Milanesa,40.00,antojitos,Torta de chilaquiles con milanesa (60 gr),TRUE,2024-05-22
+24,Torta de Chilaquiles con Arrachera,50.00,antojitos,Torta de chilaquiles con arrachera (60 gr),TRUE,2024-05-22
+25,Tecolotes Sencillos,50.00,antojitos,Molletes con chilaquiles verdes, rojos o combinados (120 gr),TRUE,2024-05-22
+26,Tecolotes con Pollo,55.00,antojitos,Molletes con chilaquiles y pollo (60 gr),TRUE,2024-05-22
+27,Tecolotes con Chorizo,60.00,antojitos,Molletes con chilaquiles y chorizo (80 gr),TRUE,2024-05-22
+28,Tecolotes con Bistec,70.00,antojitos,Molletes con chilaquiles y bistec (100 gr),TRUE,2024-05-22
+29,Enchiladas,60.00,antojitos,(4) Enchiladas verdes, rojas o de mole con pollo (80 gr),TRUE,2024-05-22
+30,Enchiladas Suizas,75.00,antojitos,(4) Enchiladas suizas con pollo (80 gr),TRUE,2024-05-22
+31,Burrito Cientifico,85.00,burritos,Tortilla de harina XL con bistec, frijoles, queso mix, lechuga, jitomate, crema y papas a la francesa,TRUE,2024-05-22
+32,Burrito Reguetonero,85.00,burritos,Tortilla de harina XL con milanesa de pollo o res, frijoles, queso mix, lechuga, jitomate, crema y papas a la francesa,TRUE,2024-05-22
+33,Burrito Don Ferch,85.00,burritos,Tortilla de harina XL con milanesa de pollo, jamón y queso, frijoles, lechuga, jitomate, crema y papas a la francesa,TRUE,2024-05-22
+34,Burrito Che Burrito,85.00,burritos,Tortilla de harina XL con chorizo argentino, frijoles, queso mix, lechuga, jitomate, crema y papas a la francesa,TRUE,2024-05-22
+35,Burrito California,85.00,burritos,Tortilla de harina XL con milanesa de pollo y queso philadelphia, frijoles, lechuga, jitomate, crema y papas a la francesa,TRUE,2024-05-22
+36,Burrito Pizzero,85.00,burritos,Tortilla de harina XL con carne, pepperoni y queso, frijoles, lechuga, jitomate, crema y papas a la francesa,TRUE,2024-05-22
+37,Burrito Deluxe,85.00,burritos,Tortilla de harina XL con arrachera y queso, frijoles, lechuga, jitomate, crema y papas a la francesa,TRUE,2024-05-22
+38,Sandwich de Jamón,25.00,sandwiches,Pan blanco o integral con jamón (50 gr), queso mix o panela, frijoles, mayonesa y vegetales,TRUE,2024-05-22
+39,Sandwich de Salchicha,25.00,sandwiches,Pan blanco o integral con salchicha (100 gr), queso mix o panela, frijoles, mayonesa y vegetales,TRUE,2024-05-22
+40,Sandwich de Huevo,28.00,sandwiches,Pan blanco o integral con huevo (1 pz), queso mix o panela, frijoles, mayonesa y vegetales,TRUE,2024-05-22
+41,Sandwich de Pollo,40.00,sandwiches,Pan blanco o integral con pollo a la plancha (100 gr), queso mix o panela, frijoles, mayonesa y vegetales,TRUE,2024-05-22
+42,Sandwich de Pavo,40.00,sandwiches,Pan blanco o integral con pechuga de pavo (50 gr), queso mix o panela, frijoles, mayonesa y vegetales,TRUE,2024-05-22
+43,Suizo,45.00,sandwiches,Champiñones a la plancha (30 gr), queso mix (50 gr) y queso panela (30 gr),TRUE,2024-05-22
+44,California,55.00,sandwiches,Pollo empanizado (80 gr) y queso Philadelphia (25 gr),TRUE,2024-05-22
+45,Campirano,55.00,sandwiches,Pollo a la BBQ (100 gr), jamón (35 gr) y queso mix (40 gr),TRUE,2024-05-22
+46,Club Sandwich,75.00,sandwiches,Pollo deshebrado (40 gr), jamón (35 gr), queso mix (40 gr), tocino (1 rebanada) y queso amarillo,TRUE,2024-05-22
+47,Hamburguesa Sencilla,65.00,hamburguesas,Carne artesanal con queso amarillo (1 reb.) y papas a la francesa,TRUE,2024-05-22
+48,Hamburguesa Doble Queso,75.00,hamburguesas,Carne artesanal con queso amarillo y queso mix (40 gr) y papas a la francesa,TRUE,2024-05-22
+49,Ensalada CIC,85.00,ensaladas,Mix de lechugas, jicama, zanahoria, jitomate, pepino, cacahuate natural, espinaca y pollo a la plancha con agua del día,TRUE,2024-05-22
+50,Ensalada Atún Cuántico,85.00,ensaladas,Mix de lechugas, pepino, jitomate cheerry, elotito, queso panela y atún (100 gr) en agua con agua del día,TRUE,2024-05-22

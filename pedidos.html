@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Cayetana - Tomar Pedidos</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="shortcut icon" href="logocaye.png" />
+    <link rel="stylesheet" href="/pedidos.css">
+</head>
+
+<body>
+    <header>
+        <div class="container header-content">
+            <a href="main.html" class="logo">
+                <img src="./titulo-doublebass.png" alt="Título con fuente Doublebass" height="50px" />
+            </a>
+            <div class="nav-buttons">
+                <span id="userRole">Mesero</span>
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+                <a href="mesasparapedir.html" class="btn btn-secondary">Cambiar Mesa</a>
+                <button class="btn btn-danger" id="logoutBtn">Cerrar Sesión</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">
+                    Tomar Pedido
+                    <span class="mesa-info" id="mesaInfo">Mesa: --</span>
+                </h1>
+            </div>
+
+            <div class="carrito-container">
+                <div class="carrito-header">
+                    <h2 class="carrito-title">Pedido Actual</h2>
+                    <span id="totalItems">0 items</span>
+                </div>
+
+                <div class="carrito-items" id="carritoItems">
+                    <div class="empty-state">
+                        <p>No hay items en el pedido</p>
+                    </div>
+                </div>
+
+                <div class="carrito-total">
+                    <span class="total-label">Total:</span>
+                    <span class="total-monto" id="totalMonto">$0.00</span>
+                </div>
+
+                <div class="carrito-actions">
+                    <button class="btn btn-secondary" id="limpiarBtn">Limpiar</button>
+                    <button class="btn btn-success" id="enviarPedidoBtn">Enviar Pedido</button>
+                </div>
+            </div>
+
+            <div class="notabuttoncontainer">
+                <button class="btn btn-info" id="notaBtn">Agregar Nota</button>
+            </div>
+
+            <!-- Nota de la mesa -->
+            <div class="nota-mesa hidden" id="notaMesaContainer">
+                <div id="notaMesaContent"></div>
+                <button class="btn btn-info btn-sm" id="editarNotaBtn" style="margin-top: 0.5rem;">Editar Nota</button>
+            </div>
+
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Buscar platillos...">
+                <button class="btn" id="searchBtn">Buscar</button>
+            </div>
+
+            <div class="categorias" id="categoriasContainer">
+                <!-- Las categorías se cargarán dinámicamente -->
+            </div>
+
+            <div class="menu-grid" id="menuGrid">
+                <!-- Los platillos se cargarán dinámicamente aquí -->
+            </div>
+
+            <div class="empty-state hidden" id="emptyState">
+                <p>No se encontraron platillos</p>
+            </div>
+
+
+        </div>
+    </main>
+
+    <!-- Modal para agregar platillo -->
+    <div class="modal" id="platilloModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Agregar al Pedido</h2>
+                <button class="close-modal" id="closeModal">×</button>
+            </div>
+            <form id="platilloForm">
+                <input type="hidden" id="platilloId">
+
+                <div class="form-group">
+                    <label>Platillo:</label>
+                    <div id="platilloInfo" style="padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                        <!-- Información del platillo -->
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="personaSelect">Para persona:</label>
+                    <select id="personaSelect" class="persona-select" required>
+                        <option value="">Seleccionar persona</option>
+                        <option value="1">Persona 1</option>
+                        <option value="2">Persona 2</option>
+                        <option value="3">Persona 3</option>
+                        <option value="4">Persona 4</option>
+                        <option value="5">Persona 5</option>
+                        <option value="6">Persona 6</option>
+                        <option value="7">Persona 7</option>
+                        <option value="8">Persona 8</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Cantidad:</label>
+                    <div class="cantidad-selector">
+                        <button type="button" class="cantidad-btn-modal" id="decrementBtn">-</button>
+                        <span class="cantidad-num-modal" id="cantidadDisplay">1</span>
+                        <button type="button" class="cantidad-btn-modal" id="incrementBtn">+</button>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelModal">Cancelar</button>
+                    <button type="submit" class="btn btn-success" id="agregarPlatilloBtn">
+                        <span id="submitText">Agregar al Pedido</span>
+                        <span id="submitLoading" class="loading" style="display: none;"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para nota de mesa -->
+    <div class="modal" id="notaModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Nota para la Mesa</h2>
+                <button class="close-modal" id="closeNotaModal">×</button>
+            </div>
+            <form id="notaForm">
+                <div class="form-group">
+                    <label for="notaTexto">Nota:</label>
+                    <textarea id="notaTexto" rows="4" placeholder="Escribe una nota para esta mesa..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelNotaModal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Guardar Nota</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>© 2025 La cayetana - Sistema de Gestión para Restaurantes</p>
+        </div>
+    </footer>
+
+    <script>
+        // Inicializar Supabase
+        const SUPABASE_URL = 'https://ouglkdanbxomammpqhmc.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91Z2xrZGFuYnhvbWFtbXBxaG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0OTc2NjUsImV4cCI6MjA3NDA3MzY2NX0.MV2IJ8LGCASbf6qgZuIkQ_CWl0i-w9UcmrlyUb1E4WI';
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Elementos DOM
+        const themeToggle = document.getElementById('themeToggle');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userRoleSpan = document.getElementById('userRole');
+        const mesaInfo = document.getElementById('mesaInfo');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const categoriasContainer = document.getElementById('categoriasContainer');
+        const menuGrid = document.getElementById('menuGrid');
+        const emptyState = document.getElementById('emptyState');
+        const carritoItems = document.getElementById('carritoItems');
+        const totalItems = document.getElementById('totalItems');
+        const totalMonto = document.getElementById('totalMonto');
+        const limpiarBtn = document.getElementById('limpiarBtn');
+        const enviarPedidoBtn = document.getElementById('enviarPedidoBtn');
+        const notaBtn = document.getElementById('notaBtn');
+        const editarNotaBtn = document.getElementById('editarNotaBtn');
+        const notaMesaContainer = document.getElementById('notaMesaContainer');
+        const notaMesaContent = document.getElementById('notaMesaContent');
+
+        // Modales
+        const platilloModal = document.getElementById('platilloModal');
+        const notaModal = document.getElementById('notaModal');
+        const platilloForm = document.getElementById('platilloForm');
+        const notaForm = document.getElementById('notaForm');
+        const platilloInfo = document.getElementById('platilloInfo');
+        const personaSelect = document.getElementById('personaSelect');
+        const cantidadDisplay = document.getElementById('cantidadDisplay');
+        const decrementBtn = document.getElementById('decrementBtn');
+        const incrementBtn = document.getElementById('incrementBtn');
+        const notaTexto = document.getElementById('notaTexto');
+
+        // Variables de estado
+        let currentUser = null;
+        let currentMesa = null;
+        let currentCuenta = null;
+        let platillos = [];
+        let carrito = JSON.parse(localStorage.getItem(`carrito_mesa_${currentMesa?.id}`)) || [];
+        let cantidadActual = 1;
+        let platilloSeleccionado = null;
+        let notaActual = null;
+
+        // Inicializar la aplicación
+        // Corregir la función init
+        async function init() {
+            // Verificar autenticación
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Cargar datos de usuario
+            const userData = JSON.parse(localStorage.getItem('user'));
+            if (userData) {
+                currentUser = userData;
+                userRoleSpan.textContent = userData.role;
+            }
+
+            // Obtener mesa de la URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const mesaId = urlParams.get('mesa_id');
+
+            if (!mesaId) {
+                mostrarError('No se ha seleccionado una mesa');
+                window.location.href = 'mesasparapedir.html';
+                return;
+            }
+
+            // Cargar datos de la mesa
+            await cargarMesa(mesaId);
+
+            // Cargar platillos
+            await cargarPlatillos();
+
+            // Cargar nota de la mesa
+            await cargarNotaMesa();
+
+            // Cargar pedidos existentes DESPUÉS de tener la cuenta
+            await cargarPedidosExistentes();
+
+            // Actualizar interfaz
+            actualizarInterfazCuenta();
+
+            // Configurar event listeners
+            configurarEventListeners();
+
+            // Verificar tema
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeToggle.textContent = '☀️';
+            }
+        }
+
+        // Cargar datos de la mesa
+        async function cargarMesa(mesaId) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('mesas')
+                    .select('*')
+                    .eq('id', mesaId)
+                    .single();
+
+                if (error) throw error;
+
+                currentMesa = data;
+                mesaInfo.textContent = `Mesa: ${currentMesa.numero}`;
+
+                // Buscar o crear cuenta abierta
+                await gestionarCuenta();
+
+            } catch (error) {
+                console.error('Error cargando mesa:', error);
+                mostrarError('Error al cargar la mesa');
+                window.location.href = 'mesasparapedir.html';
+            }
+        }
+
+        // Gestionar cuenta (abrir o obtener existente)
+        async function gestionarCuenta() {
+            try {
+                // Buscar cuenta abierta para esta mesa
+                const { data: cuentaExistente, error: cuentaError } = await supabaseClient
+                    .from('cuentas')
+                    .select('*')
+                    .eq('mesa_id', currentMesa.id)
+                    .eq('status', 0)
+                    .single();
+
+                if (cuentaError && cuentaError.code !== 'PGRST116') {
+                    throw cuentaError;
+                }
+
+                if (cuentaExistente) {
+                    currentCuenta = cuentaExistente;
+                } else {
+                    // Crear nueva cuenta
+                    const { data: nuevaCuenta, error: insertError } = await supabaseClient
+                        .from('cuentas')
+                        .insert([{
+                            mesa_id: currentMesa.id,
+                            status: 0,
+                            mesero_nombre: currentUser.nombre
+                        }])
+                        .select()
+                        .single();
+
+                    if (insertError) throw insertError;
+                    currentCuenta = nuevaCuenta;
+                }
+
+            } catch (error) {
+                console.error('Error gestionando cuenta:', error);
+                mostrarError('Error al gestionar la cuenta');
+            }
+        }
+
+
+
+        // Cargar platillos desde Supabase
+        async function cargarPlatillos() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('platillos')
+                    .select('*')
+                    .eq('activo', true)
+                    .order('nombre', { ascending: true });
+
+                if (error) throw error;
+
+                platillos = data || [];
+                renderizarPlatillos();
+                renderizarCategorias();
+            } catch (error) {
+                console.error('Error cargando platillos:', error);
+                mostrarError('Error al cargar el menú');
+            }
+        }
+
+        // Cargar nota de la mesa
+        async function cargarNotaMesa() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('notas_mesa')
+                    .select('*')
+                    .eq('mesa_id', currentMesa.id)
+                    .single();
+
+                if (error && error.code !== 'PGRST116') {
+                    throw error;
+                }
+
+                if (data) {
+                    notaActual = data;
+                    mostrarNotaMesa();
+                }
+
+            } catch (error) {
+                console.error('Error cargando nota:', error);
+            }
+        }
+
+        // Mostrar nota de la mesa en la interfaz
+        function mostrarNotaMesa() {
+            if (notaActual && notaActual.nota) {
+                notaMesaContent.innerHTML = `
+                <strong>Nota:</strong> ${notaActual.nota}
+                <br><small>Creada: ${new Date(notaActual.creado_en).toLocaleString()}</small>
+            `;
+                notaMesaContainer.classList.remove('hidden');
+            } else {
+                notaMesaContainer.classList.add('hidden');
+            }
+        }
+
+        // Cambiar el botón "Enviar Pedido" por "Finalizar Cuenta"
+        function actualizarInterfazCuenta() {
+            const enviarPedidoBtn = document.getElementById('enviarPedidoBtn');
+            enviarPedidoBtn.innerHTML = 'Continuar a Finalizar';
+            enviarPedidoBtn.onclick = finalizarCuenta;
+        }
+
+        // Renderizar categorías
+        function renderizarCategorias() {
+            const categorias = [...new Set(platillos.map(p => p.categoria))];
+
+            categoriasContainer.innerHTML = `
+            <button class="categoria-btn active" data-categoria="todos">Todos</button>
+            ${categorias.map(categoria => `
+                <button class="categoria-btn" data-categoria="${categoria}">
+                    ${categoria}
+                </button>
+            `).join('')}
+        `;
+
+            // Event listeners para categorías
+            document.querySelectorAll('.categoria-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const categoria = e.target.dataset.categoria;
+
+                    // Actualizar botones activos
+                    document.querySelectorAll('.categoria-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+
+                    // Filtrar platillos
+                    filtrarPlatillos(categoria);
+                });
+            });
+        }
+
+        // Filtrar platillos por categoría
+        function filtrarPlatillos(categoria) {
+            const searchTerm = searchInput.value.toLowerCase();
+            let platillosFiltrados = platillos;
+
+            if (categoria !== 'todos') {
+                platillosFiltrados = platillosFiltrados.filter(p => p.categoria === categoria);
+            }
+
+            if (searchTerm) {
+                platillosFiltrados = platillosFiltrados.filter(p =>
+                    p.nombre.toLowerCase().includes(searchTerm) ||
+                    (p.descripcion && p.descripcion.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            renderizarPlatillos(platillosFiltrados);
+        }
+
+        // Renderizar platillos en la cuadrícula
+        function renderizarPlatillos(platillosLista = platillos) {
+            menuGrid.innerHTML = '';
+
+            if (platillosLista.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            platillosLista.forEach(platillo => {
+                const card = document.createElement('div');
+                card.className = 'platillo-card';
+                card.innerHTML = `
+                <div class="platillo-nombre">${platillo.nombre}</div>
+                ${platillo.descripcion ? `<div class="platillo-descripcion">${platillo.descripcion}</div>` : ''}
+                <div class="platillo-precio">$${platillo.precio.toFixed(2)}</div>
+            `;
+
+                card.addEventListener('click', () => abrirModalPlatillo(platillo));
+                menuGrid.appendChild(card);
+            });
+        }
+
+        // Recalcular total de la cuenta
+        async function recalcularTotalCuenta() {
+            try {
+                // Calcular total sumando todos los items del carrito
+                const nuevoTotal = carrito.reduce((total, item) => total + item.total, 0);
+
+                // Actualizar en base de datos
+                const { error } = await supabaseClient
+                    .from('cuentas')
+                    .update({ total: nuevoTotal })
+                    .eq('id', currentCuenta.id);
+
+                if (error) throw error;
+
+                console.log('Total de cuenta actualizado:', nuevoTotal);
+
+            } catch (error) {
+                console.error('Error recalculando total:', error);
+            }
+        }
+
+        // Abrir modal para agregar platillo
+        function abrirModalPlatillo(platillo) {
+            platilloSeleccionado = platillo;
+            cantidadActual = 1;
+
+            document.getElementById('modalTitle').textContent = `Agregar ${platillo.nombre}`;
+            document.getElementById('platilloId').value = platillo.id;
+
+            platilloInfo.innerHTML = `
+            <strong>${platillo.nombre}</strong>
+            ${platillo.descripcion ? `<div>${platillo.descripcion}</div>` : ''}
+            <div style="margin-top: 0.5rem; font-weight: 600; color: var(--primary-dark);">
+                Precio: $${platillo.precio.toFixed(2)}
+            </div>
+        `;
+
+            cantidadDisplay.textContent = cantidadActual;
+            platilloModal.style.display = 'flex';
+        }
+
+        // Abrir modal para nota de mesa
+        function abrirModalNota() {
+            if (notaActual) {
+                notaTexto.value = notaActual.nota;
+            } else {
+                notaTexto.value = '';
+            }
+            notaModal.style.display = 'flex';
+        }
+
+        // Configurar event listeners
+        function configurarEventListeners() {
+            // Tema toggle
+            themeToggle.addEventListener('click', toggleTema);
+
+            // Logout
+            logoutBtn.addEventListener('click', cerrarSesion);
+
+            // Búsqueda
+            searchBtn.addEventListener('click', () => {
+                const categoriaActiva = document.querySelector('.categoria-btn.active').dataset.categoria;
+                filtrarPlatillos(categoriaActiva);
+            });
+
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const categoriaActiva = document.querySelector('.categoria-btn.active').dataset.categoria;
+                    filtrarPlatillos(categoriaActiva);
+                }
+            });
+
+            // Modal de platillo
+            decrementBtn.addEventListener('click', () => {
+                if (cantidadActual > 1) {
+                    cantidadActual--;
+                    cantidadDisplay.textContent = cantidadActual;
+                }
+            });
+
+            incrementBtn.addEventListener('click', () => {
+                cantidadActual++;
+                cantidadDisplay.textContent = cantidadActual;
+            });
+
+            document.getElementById('closeModal').addEventListener('click', cerrarModales);
+            document.getElementById('cancelModal').addEventListener('click', cerrarModales);
+            platilloForm.addEventListener('submit', agregarAlCarrito);
+
+            // Modal de nota
+            notaBtn.addEventListener('click', abrirModalNota);
+            editarNotaBtn.addEventListener('click', abrirModalNota);
+            document.getElementById('closeNotaModal').addEventListener('click', cerrarModales);
+            document.getElementById('cancelNotaModal').addEventListener('click', cerrarModales);
+            notaForm.addEventListener('submit', guardarNota);
+
+            // Carrito
+            limpiarBtn.addEventListener('click', limpiarCarrito);
+            enviarPedidoBtn.addEventListener('click', enviarPedido);
+
+            // Cerrar modal al hacer clic fuera
+            window.addEventListener('click', (e) => {
+                if (e.target === platilloModal) cerrarModales();
+                if (e.target === notaModal) cerrarModales();
+            });
+        }
+
+        // Toggle tema claro/oscuro
+        function toggleTema() {
+            document.body.classList.toggle('dark-theme');
+            if (document.body.classList.contains('dark-theme')) {
+                localStorage.setItem('theme', 'dark');
+                themeToggle.textContent = '☀️';
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeToggle.textContent = '🌙';
+            }
+        }
+
+        // Cerrar sesión
+        async function cerrarSesion() {
+            await supabaseClient.auth.signOut();
+            localStorage.removeItem('user');
+            window.location.href = 'index.html';
+        }
+
+        // Cerrar modales
+        function cerrarModales() {
+            platilloModal.style.display = 'none';
+            notaModal.style.display = 'none';
+            platilloForm.reset();
+            notaForm.reset();
+        }
+
+        // Añadir esta función después de eliminarItem
+        async function recalcularTotalCuenta() {
+            try {
+                // Calcular total sumando todos los items del carrito
+                const nuevoTotal = carrito.reduce((total, item) => total + item.total, 0);
+
+                console.log('Actualizando total de cuenta:', nuevoTotal);
+
+                // Actualizar en base de datos
+                const { error } = await supabaseClient
+                    .from('cuentas')
+                    .update({ total: nuevoTotal })
+                    .eq('id', currentCuenta.id);
+
+                if (error) throw error;
+
+                console.log('Total de cuenta actualizado correctamente');
+
+            } catch (error) {
+                console.error('Error recalculando total:', error);
+            }
+        }
+
+        // Agregar platillo al carrito
+        // Agregar item al carrito (y guardar inmediatamente en BD)
+        // Reemplazar la función agregarAlCarrito completa
+        async function agregarAlCarrito(e) {
+            e.preventDefault();
+
+            if (!platilloSeleccionado || !personaSelect.value) {
+                mostrarError('Selecciona una persona para el pedido');
+                return;
+            }
+
+            const persona = personaSelect.value;
+            const cantidad = cantidadActual;
+            const platilloId = platilloSeleccionado.id;
+
+            try {
+                // Verificar si ya existe una orden para esta persona en la cuenta
+                const { data: ordenExistente, error: ordenError } = await supabaseClient
+                    .from('ordenes')
+                    .select('id')
+                    .eq('cuenta_id', currentCuenta.id)
+                    .eq('persona', persona)
+                    .single();
+
+                let ordenId;
+
+                if (ordenError && ordenError.code === 'PGRST116') {
+                    // No existe orden para esta persona, crear una nueva
+                    const { data: nuevaOrden, error: nuevaOrdenError } = await supabaseClient
+                        .from('ordenes')
+                        .insert([{
+                            cuenta_id: currentCuenta.id,
+                            persona: persona,
+                            staff_id: currentUser.id
+                        }])
+                        .select()
+                        .single();
+
+                    if (nuevaOrdenError) throw nuevaOrdenError;
+                    ordenId = nuevaOrden.id;
+                    console.log('Nueva orden creada:', ordenId);
+                } else if (ordenError) {
+                    throw ordenError;
+                } else {
+                    ordenId = ordenExistente.id;
+                    console.log('Orden existente:', ordenId);
+                }
+
+                // Verificar si ya existe este platillo en la orden de esta persona
+                const { data: itemExistente, error: itemError } = await supabaseClient
+                    .from('orden_items')
+                    .select('id, cantidad')
+                    .eq('orden_id', ordenId)
+                    .eq('platillo_id', platilloId)
+                    .single();
+
+                if (itemError && itemError.code === 'PGRST116') {
+                    // Item no existe, crear nuevo
+                    const { data: nuevoItem, error: insertError } = await supabaseClient
+                        .from('orden_items')
+                        .insert([{
+                            orden_id: ordenId,
+                            platillo_id: platilloId,
+                            nombre_platillo: platilloSeleccionado.nombre,
+                            cantidad: cantidad,
+                            precio_unitario: platilloSeleccionado.precio,
+                            precio_individual: platilloSeleccionado.precio,
+                            persona: persona  // ← AÑADIR ESTE CAMPO
+                        }])
+                        .select()
+                        .single();
+
+                    if (insertError) throw insertError;
+
+                    console.log('Nuevo item creado:', nuevoItem.id);
+
+                    // Agregar al carrito local
+                    carrito.push({
+                        id: nuevoItem.id,
+                        platillo_id: platilloId,
+                        nombre: platilloSeleccionado.nombre,
+                        precio_unitario: platilloSeleccionado.precio,
+                        precio_individual: platilloSeleccionado.precio,
+                        cantidad: cantidad,
+                        persona: persona,
+                        total: platilloSeleccionado.precio * cantidad
+                    });
+
+                } else if (itemError) {
+                    throw itemError;
+                } else {
+                    // Item existe, actualizar cantidad
+                    const nuevaCantidad = itemExistente.cantidad + cantidad;
+                    const { error: updateError } = await supabaseClient
+                        .from('orden_items')
+                        .update({
+                            cantidad: nuevaCantidad,
+                            persona: persona  // ← Actualizar persona también por si acaso
+                        })
+                        .eq('id', itemExistente.id);
+
+                    if (updateError) throw updateError;
+
+                    console.log('Item actualizado:', itemExistente.id, 'nueva cantidad:', nuevaCantidad);
+
+                    // Actualizar en carrito local
+                    const itemIndex = carrito.findIndex(item =>
+                        item.id === itemExistente.id
+                    );
+                    if (itemIndex !== -1) {
+                        carrito[itemIndex].cantidad = nuevaCantidad;
+                        carrito[itemIndex].total = carrito[itemIndex].precio_unitario * nuevaCantidad;
+                        carrito[itemIndex].persona = persona;
+                    } else {
+                        // Si no está en carrito local, agregarlo
+                        carrito.push({
+                            id: itemExistente.id,
+                            platillo_id: platilloId,
+                            nombre: platilloSeleccionado.nombre,
+                            precio_unitario: platilloSeleccionado.precio,
+                            precio_individual: platilloSeleccionado.precio,
+                            cantidad: nuevaCantidad,
+                            persona: persona,
+                            total: platilloSeleccionado.precio * nuevaCantidad
+                        });
+                    }
+                }
+
+                // Recalcular total de la cuenta
+                await recalcularTotalCuenta();
+
+                // Recargar pedidos para asegurar consistencia
+                await cargarPedidosExistentes();
+
+                cerrarModales();
+                mostrarExito('Platillo agregado a la cuenta');
+
+            } catch (error) {
+                console.error('Error agregando al carrito:', error);
+                mostrarError('Error al agregar el platillo: ' + error.message);
+            }
+        }
+        // Guardar nota de la mesa
+        async function guardarNota(e) {
+            e.preventDefault();
+
+            const nota = notaTexto.value.trim();
+
+            if (!nota) {
+                mostrarError('La nota no puede estar vacía');
+                return;
+            }
+
+            try {
+                if (notaActual) {
+                    // Actualizar nota existente
+                    const { error } = await supabaseClient
+                        .from('notas_mesa')
+                        .update({
+                            nota: nota,
+                            usuario_id: currentUser.id
+                        })
+                        .eq('id', notaActual.id);
+
+                    if (error) throw error;
+                } else {
+                    // Crear nueva nota
+                    const { data, error } = await supabaseClient
+                        .from('notas_mesa')
+                        .insert([{
+                            mesa_id: currentMesa.id,
+                            nota: nota,
+                            usuario_id: currentUser.id
+                        }])
+                        .select()
+                        .single();
+
+                    if (error) throw error;
+                    notaActual = data;
+                }
+
+                mostrarNotaMesa();
+                cerrarModales();
+                mostrarExito('Nota guardada correctamente');
+
+            } catch (error) {
+                console.error('Error guardando nota:', error);
+                mostrarError('Error al guardar la nota');
+            }
+        }
+
+        // Actualizar visualización del carrito
+        function actualizarCarrito() {
+            if (carrito.length === 0) {
+                carritoItems.innerHTML = `
+                <div class="empty-state">
+                    <p>No hay items en el pedido</p>
+                </div>
+            `;
+                totalItems.textContent = '0 items';
+                totalMonto.textContent = '$0.00';
+                return;
+            }
+
+            let html = '';
+            let total = 0;
+            let totalItemsCount = 0;
+
+            carrito.forEach((item, index) => {
+                const itemTotal = item.precio_unitario * item.cantidad;
+                total += itemTotal;
+                totalItemsCount += item.cantidad;
+
+                html += `
+                <div class="carrito-item">
+                    <div class="item-info">
+                        <div class="item-nombre">${item.nombre}</div>
+                        <span class="item-persona">Persona ${item.persona}</span>
+                        <div class="item-cantidad">
+                            <button class="cantidad-btn" onclick="modificarCantidad(${index}, -1)">-</button>
+                            <span class="cantidad-num">${item.cantidad}</span>
+                            <button class="cantidad-btn" onclick="modificarCantidad(${index}, 1)">+</button>
+                        </div>
+                    </div>
+                    <div class="item-precio">$${itemTotal.toFixed(2)}</div>
+                    <button class="item-eliminar" onclick="eliminarItem(${index})">✕</button>
+                </div>
+            `;
+            });
+
+            carritoItems.innerHTML = html;
+            totalItems.textContent = `${totalItemsCount} ${totalItemsCount === 1 ? 'item' : 'items'}`;
+            totalMonto.textContent = `$${total.toFixed(2)}`;
+            localStorage.setItem(`carrito_mesa_${currentMesa.id}`, JSON.stringify(carrito));
+        }
+
+        // Modificar cantidad de un item
+        function modificarCantidad(index, cambio) {
+            const nuevoValor = carrito[index].cantidad + cambio;
+
+            if (nuevoValor <= 0) {
+                eliminarItem(index);
+            } else {
+                carrito[index].cantidad = nuevoValor;
+                actualizarCarrito();
+            }
+        }
+
+        // Añadir esta función después de cargarNotaMesa()
+        async function cargarPedidosExistentes() {
+            try {
+                if (!currentCuenta) {
+                    console.log('No hay cuenta activa para cargar pedidos');
+                    return;
+                }
+
+                console.log('Cargando pedidos existentes para cuenta:', currentCuenta.id);
+
+                // Cargar órdenes y sus items
+                const { data: ordenes, error } = await supabaseClient
+                    .from('ordenes')
+                    .select(`
+                id,
+                persona,
+                orden_items (
+                    id,
+                    platillo_id,
+                    nombre_platillo,
+                    cantidad,
+                    precio_unitario,
+                    precio_individual,
+                    total
+                )
+            `)
+                    .eq('cuenta_id', currentCuenta.id);
+
+                if (error) {
+                    console.error('Error cargando órdenes:', error);
+                    return;
+                }
+
+                // Reconstruir carrito desde la base de datos
+                carrito = [];
+                if (ordenes && ordenes.length > 0) {
+                    ordenes.forEach(orden => {
+                        if (orden.orden_items && orden.orden_items.length > 0) {
+                            orden.orden_items.forEach(item => {
+                                carrito.push({
+                                    id: item.id,
+                                    platillo_id: item.platillo_id,
+                                    nombre: item.nombre_platillo,
+                                    precio_unitario: parseFloat(item.precio_unitario),
+                                    precio_individual: parseFloat(item.precio_individual),
+                                    cantidad: item.cantidad,
+                                    persona: orden.persona,
+                                    total: parseFloat(item.total)
+                                });
+                            });
+                        }
+                    });
+
+                    console.log('Pedidos cargados desde BD:', carrito.length);
+                    actualizarCarrito();
+                }
+
+            } catch (error) {
+                console.error('Error cargando pedidos existentes:', error);
+            }
+        }
+
+        // Modificar cantidad (actualizar en BD inmediatamente)
+        async function modificarCantidad(index, cambio) {
+            const item = carrito[index];
+            const nuevaCantidad = item.cantidad + cambio;
+
+            if (nuevaCantidad <= 0) {
+                await eliminarItem(index);
+                return;
+            }
+
+            try {
+                // Actualizar en base de datos
+                const { error } = await supabaseClient
+                    .from('orden_items')
+                    .update({ cantidad: nuevaCantidad })
+                    .eq('id', item.id);
+
+                if (error) throw error;
+
+                // Actualizar localmente
+                item.cantidad = nuevaCantidad;
+                item.total = item.precio_unitario * nuevaCantidad;
+
+                // Recalcular total de la cuenta
+                await recalcularTotalCuenta();
+
+                actualizarCarrito();
+
+            } catch (error) {
+                console.error('Error modificando cantidad:', error);
+                mostrarError('Error al modificar la cantidad');
+            }
+        }
+
+        // Eliminar item del carrito
+        function eliminarItem(index) {
+            carrito.splice(index, 1);
+            actualizarCarrito();
+        }
+
+        // Limpiar carrito
+        function limpiarCarrito() {
+            if (carrito.length === 0) return;
+
+            if (confirm('¿Estás seguro de que quieres limpiar todo el pedido?')) {
+                carrito = [];
+                actualizarCarrito();
+                mostrarExito('Pedido limpiado');
+            }
+        }
+
+        // Enviar pedido a la base de datos
+        async function enviarPedido() {
+            if (carrito.length === 0) {
+                mostrarError('El pedido está vacío');
+                return;
+            }
+
+            if (!currentCuenta) {
+                mostrarError('No hay una cuenta activa para esta mesa');
+                return;
+            }
+
+            const submitBtn = document.getElementById('enviarPedidoBtn');
+            const originalText = submitBtn.innerHTML;
+
+            try {
+                submitBtn.innerHTML = '<span class="loading"></span> Enviando...';
+                submitBtn.disabled = true;
+
+                // Agrupar items por persona para crear órdenes separadas
+                const itemsPorPersona = {};
+                carrito.forEach(item => {
+                    if (!itemsPorPersona[item.persona]) {
+                        itemsPorPersona[item.persona] = [];
+                    }
+                    itemsPorPersona[item.persona].push(item);
+                });
+
+                // Crear una orden por cada persona
+                for (const [persona, items] of Object.entries(itemsPorPersona)) {
+                    // Crear orden para la persona
+                    const { data: orden, error: ordenError } = await supabaseClient
+                        .from('ordenes')
+                        .insert([{
+                            cuenta_id: currentCuenta.id,
+                            staff_id: currentUser.id,
+                            persona: persona
+                        }])
+                        .select()
+                        .single();
+
+                    if (ordenError) throw ordenError;
+
+                    // Preparar items para insertar
+                    const itemsParaInsertar = items.map(item => ({
+                        orden_id: orden.id,
+                        platillo_id: item.platillo_id,
+                        nombre_platillo: item.nombre,
+                        mesa: item.mesa,
+                        persona: item.persona,
+                        cantidad: item.cantidad,
+                        precio_unitario: item.precio_unitario,
+                        precio_individual: item.precio_individual
+                    }));
+
+                    // Insertar items de la orden
+                    const { error: itemsError } = await supabaseClient
+                        .from('orden_items')
+                        .insert(itemsParaInsertar);
+
+                    if (itemsError) throw itemsError;
+                }
+
+                // Si hay nota, transferirla a la cuenta
+                if (notaActual && notaActual.nota) {
+                    const { error: notaError } = await supabaseClient
+                        .from('cuentas')
+                        .update({
+                            notas: notaActual.nota
+                        })
+                        .eq('id', currentCuenta.id);
+
+                    if (notaError) throw notaError;
+
+                    // Eliminar la nota de la mesa
+                    await supabaseClient
+                        .from('notas_mesa')
+                        .delete()
+                        .eq('id', notaActual.id);
+                }
+
+                // Limpiar carrito y mostrar éxito
+                carrito = [];
+                actualizarCarrito();
+                notaActual = null;
+                mostrarNotaMesa();
+                mostrarExito('Pedido enviado correctamente');
+
+            } catch (error) {
+                console.error('Error enviando pedido:', error);
+                //mostrarError('Error al enviar el pedido: ' + error.message);
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Finalizar cuenta (redirigir a finalizar.html)
+        async function finalizarCuenta() {
+            if (carrito.length === 0) {
+                mostrarError('La cuenta está vacía');
+                return;
+            }
+
+            // Redirigir a la página de finalización
+            window.location.href = `finalizar.html?cuenta_id=${currentCuenta.id}&mesa_id=${currentMesa.id}`;
+        }
+
+        // Mostrar error
+        function mostrarError(mensaje) {
+            alert(`Error: ${mensaje}`);
+        }
+
+        // Mostrar éxito
+        function mostrarExito(mensaje) {
+            alert(`✅ ${mensaje}`);
+        }
+
+        // Hacer funciones globales para los event listeners inline
+        window.modificarCantidad = modificarCantidad;
+        window.eliminarItem = eliminarItem;
+
+        // Inicializar la aplicación
+        init();
+
+    </script>
+</body>
+
+</html>

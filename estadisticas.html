@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La cayetana - Estadísticas y Reportes</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="shortcut icon" href="logocaye.png" />
+    <style>
+        :root {
+            --primary-color: #fb74a2;
+            --primary-dark: #e05a8a;
+            --text-color: #333;
+            --bg-color: #f9f9f9;
+            --card-bg: #ffffff;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+        }
+
+        .dark-theme {
+            --primary-color: #fb74a2;
+            --primary-dark: #ff96b8;
+            --text-color: #f0f0f0;
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            width: 100%;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 1rem 0;
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo img {
+            height: 50px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .btn-info {
+            background-color: #17a2b8;
+        }
+
+        .btn-info:hover {
+            background-color: #138496;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        .main-content {
+            padding: 2rem 0;
+            flex-grow: 1;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .page-title {
+            color: var(--primary-color);
+        }
+
+        .filters-container {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            background-color: white;
+        }
+
+        .dark-theme .filter-group input,
+        .dark-theme .filter-group select {
+            background-color: #333;
+            color: white;
+            border-color: #555;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .stats-highlights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .stat-highlight {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .stat-highlight:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: #666;
+        }
+
+        .dark-theme .stat-label {
+            color: #ccc;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            height: 400px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .tables-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .table-card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .table-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            font-weight: 600;
+        }
+
+        .table-content {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .stats-table th,
+        .stats-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .dark-theme .stats-table th,
+        .dark-theme .stats-table td {
+            border-bottom: 1px solid #444;
+        }
+
+        .stats-table th {
+            background-color: rgba(251, 116, 162, 0.1);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .stats-table tr:hover {
+            background-color: rgba(251, 116, 162, 0.05);
+        }
+
+        .rank-badge {
+            display: inline-block;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            line-height: 25px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .rank-1 {
+            background-color: #ffd700;
+        }
+
+        .rank-2 {
+            background-color: #c0c0c0;
+        }
+
+        .rank-3 {
+            background-color: #cd7f32;
+        }
+
+        .export-section {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, .3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .dark-theme .empty-state {
+            color: #ccc;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: auto;
+            background-color: var(--card-bg);
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .nav-buttons {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filters {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-actions {
+                justify-content: center;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-container {
+                height: 300px;
+            }
+
+            .tables-container {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-table {
+                display: block;
+                overflow-x: auto;
+            }
+
+            .export-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container header-content">
+            <a href="main.html" class="logo">
+                <img src="./titulo-doublebass.png" alt="Título con fuente Doublebass" height="50px" />
+            </a>
+            <div class="nav-buttons">
+                <span id="userRole">Administrador</span>
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+                <a href="main.html" class="btn btn-secondary">Volver</a>
+                <button class="btn btn-danger" id="logoutBtn">Cerrar Sesión</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">Estadísticas y Reportes</h1>
+                <div class="filter-actions">
+                    <button class="btn" id="actualizarBtn">Actualizar Datos</button>
+                </div>
+            </div>
+
+            <div class="filters-container">
+                <div class="filters">
+                    <div class="filter-group">
+                        <label for="fechaInicio">Fecha Inicio:</label>
+                        <input type="date" id="fechaInicio">
+                    </div>
+                    <div class="filter-group">
+                        <label for="fechaFin">Fecha Fin:</label>
+                        <input type="date" id="fechaFin">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="filtroMesero">Filtrar por Mesero:</label>
+                        <select id="filtroMesero">
+                            <option value="todos">Todos los meseros</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button class="btn btn-secondary" id="limpiarFiltrosBtn">Limpiar Filtros</button>
+                    <button class="btn" id="aplicarFiltrosBtn">Aplicar Filtros</button>
+                </div>
+            </div>
+
+            <!-- Estadísticas principales -->
+            <div class="stats-highlights">
+                <div class="stat-highlight">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-value" id="totalVentas">$0.00</div>
+                    <div class="stat-label">Total en Ventas</div>
+                </div>
+                <div class="stat-highlight">
+                    <div class="stat-icon">🍽️</div>
+                    <div class="stat-value" id="totalCuentas">0</div>
+                    <div class="stat-label">Cuentas Cerradas</div>
+                </div>
+                <div class="stat-highlight">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-value" id="promedioCuenta">$0.00</div>
+                    <div class="stat-label">Promedio por Cuenta</div>
+                </div>
+                <div class="stat-highlight">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-value" id="platoMasVendido">-</div>
+                    <div class="stat-label">Plato Más Vendido</div>
+                </div>
+            </div>
+
+            <!-- Gráficas -->
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+
+                        <h3 for="filtroTipo">Tipo de Reporte:</h3>
+                        <select id="filtroTipo">
+                            <option value="diario">Diario</option>
+                            <option value="semanal">Semanal</option>
+                            <option value="mensual">Mensual</option>
+                            <option value="anual">Anual</option>
+                        </select>
+
+                        <h3 class="chart-title">Ventas por Día</h3>
+                        <select id="chartVentasTipo">
+                            <option value="total">Total</option>
+                            <option value="efectivo">Efectivo</option>
+                            <option value="tarjeta">Tarjeta</option>
+                            <option value="hibrido">Híbrido</option>
+                        </select>
+
+                    </div>
+                    <canvas id="ventasChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Distribución por Tipo de Pago</h3>
+                    </div>
+                    <canvas id="pagosChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Top 5 Platos Más Vendidos</h3>
+                    </div>
+                    <canvas id="platosChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Desempeño de Meseros</h3>
+                    </div>
+                    <canvas id="meserosChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Tablas de datos -->
+            <div class="tables-container">
+                <div class="table-card">
+                    <div class="table-header">Top 10 Platos Más Vendidos</div>
+                    <div class="table-content">
+                        <table class="stats-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Plato</th>
+                                    <th>Cantidad Vendida</th>
+                                    <th>Ingresos Generados</th>
+                                    <th>% del Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaPlatos">
+                                <!-- Datos se cargarán aquí -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="table-card">
+                    <div class="table-header">Ranking de Meseros</div>
+                    <div class="table-content">
+                        <table class="stats-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Mesero</th>
+                                    <th>Cuentas Atendidas</th>
+                                    <th>Total Vendido</th>
+                                    <th>Promedio por Cuenta</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaMeseros">
+                                <!-- Datos se cargarán aquí -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="table-card">
+                    <div class="table-header">Ventas por Categoría</div>
+                    <div class="table-content">
+                        <table class="stats-table">
+                            <thead>
+                                <tr>
+                                    <th>Categoría</th>
+                                    <th>Cantidad Vendida</th>
+                                    <th>Ingresos</th>
+                                    <th>% del Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaCategorias">
+                                <!-- Datos se cargarán aquí -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="table-card">
+                    <div class="table-header">Resumen por Hora del Día</div>
+                    <div class="table-content">
+                        <table class="stats-table">
+                            <thead>
+                                <tr>
+                                    <th>Hora</th>
+                                    <th>Cuentas</th>
+                                    <th>Total Ventas</th>
+                                    <th>Promedio</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaHoras">
+                                <!-- Datos se cargarán aquí -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exportación -->
+            <div class="export-section">
+                <h3>Exportar Reportes</h3>
+                <p>Descarga los datos en diferentes formatos para su análisis</p>
+                <div class="export-buttons">
+                    <button class="btn btn-info" id="exportarCSVBtn">Exportar a CSV</button>
+                    <button class="btn btn-success" id="exportarPDFBtn">Exportar a PDF</button>
+                    <button class="btn btn-secondary" id="exportarExcelBtn">Exportar a Excel</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>© 2025 La cayetana - Sistema de Gestión para Restaurantes</p>
+        </div>
+    </footer>
+
+    <script>
+        // Inicializar Supabase
+        const SUPABASE_URL = 'https://ouglkdanbxomammpqhmc.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91Z2xrZGFuYnhvbWFtbXBxaG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0OTc2NjUsImV4cCI6MjA3NDA3MzY2NX0.MV2IJ8LGCASbf6qgZuIkQ_CWl0i-w9UcmrlyUb1E4WI';
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Elementos DOM
+        const themeToggle = document.getElementById('themeToggle');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userRoleSpan = document.getElementById('userRole');
+        const fechaInicio = document.getElementById('fechaInicio');
+        const fechaFin = document.getElementById('fechaFin');
+        const filtroTipo = document.getElementById('filtroTipo');
+        const filtroMesero = document.getElementById('filtroMesero');
+        const limpiarFiltrosBtn = document.getElementById('limpiarFiltrosBtn');
+        const aplicarFiltrosBtn = document.getElementById('aplicarFiltrosBtn');
+        const actualizarBtn = document.getElementById('actualizarBtn');
+        const exportarCSVBtn = document.getElementById('exportarCSVBtn');
+        const exportarPDFBtn = document.getElementById('exportarPDFBtn');
+        const exportarExcelBtn = document.getElementById('exportarExcelBtn');
+
+        // Elementos de estadísticas
+        const totalVentas = document.getElementById('totalVentas');
+        const totalCuentas = document.getElementById('totalCuentas');
+        const promedioCuenta = document.getElementById('promedioCuenta');
+        const platoMasVendido = document.getElementById('platoMasVendido');
+
+        // Tablas
+        const tablaPlatos = document.getElementById('tablaPlatos');
+        const tablaMeseros = document.getElementById('tablaMeseros');
+        const tablaCategorias = document.getElementById('tablaCategorias');
+        const tablaHoras = document.getElementById('tablaHoras');
+
+        // Variables de estado
+        let currentUser = null;
+        let estadisticas = {};
+        let charts = {};
+        let meseros = [];
+
+        // Colores para gráficas
+        const colores = [
+            '#fb74a2', '#e05a8a', '#36a2eb', '#4bc0c0', '#ffcd56',
+            '#ff6384', '#c9cbcf', '#9966ff', '#ff9f40', '#4bc0c0'
+        ];
+
+        // Inicializar la aplicación
+        async function init() {
+            // Verificar autenticación
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Cargar datos de usuario
+            const userData = JSON.parse(localStorage.getItem('user'));
+            if (userData) {
+                currentUser = userData;
+                userRoleSpan.textContent = userData.role;
+
+                // Verificar si es admin
+                if (userData.role !== 'admin') {
+                    mostrarError('No tienes permisos para acceder a esta página');
+                    window.location.href = 'main.html';
+                    return;
+                }
+            }
+
+            // Configurar fechas por defecto (últimos 30 días)
+            const hoy = new Date();
+            const hace30Dias = new Date();
+            hace30Dias.setDate(hoy.getDate() - 30);
+
+            fechaInicio.valueAsDate = hace30Dias;
+            fechaFin.valueAsDate = hoy;
+
+            // Cargar meseros
+            await cargarMeseros();
+
+            // Cargar estadísticas
+            await cargarEstadisticas();
+
+            // Configurar event listeners
+            configurarEventListeners();
+
+            // Verificar tema
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeToggle.textContent = '☀️';
+            }
+        }
+
+        // Cargar lista de meseros
+        async function cargarMeseros() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('perfiles')
+                    .select('nombre')
+                    .eq('activo', true)
+                    .order('nombre', { ascending: true });
+
+                if (error) throw error;
+
+                meseros = data || [];
+
+                // Limpiar y llenar select de meseros
+                filtroMesero.innerHTML = '<option value="todos">Todos los meseros</option>';
+                meseros.forEach(mesero => {
+                    const option = document.createElement('option');
+                    option.value = mesero.nombre;
+                    option.textContent = mesero.nombre;
+                    filtroMesero.appendChild(option);
+                });
+
+            } catch (error) {
+                console.error('Error cargando meseros:', error);
+            }
+        }
+
+        // Cargar estadísticas desde Supabase
+        async function cargarEstadisticas() {
+            try {
+                const filtros = obtenerFiltros();
+
+                // Cargar cuentas cerradas en el período
+                let queryCuentas = supabaseClient
+                    .from('cuentas')
+                    .select('*')
+                    .eq('status', 1) // Solo cuentas cerradas
+                    .gte('fecha_cierre', filtros.fechaInicio + 'T00:00:00')
+                    .lte('fecha_cierre', filtros.fechaFin + 'T23:59:59');
+
+                if (filtros.mesero !== 'todos') {
+                    queryCuentas = queryCuentas.eq('mesero_nombre', filtros.mesero);
+                }
+
+                const { data: cuentas, error: errorCuentas } = await queryCuentas;
+
+                if (errorCuentas) throw errorCuentas;
+
+                // Cargar órdenes e items
+                const { data: ordenes, error: errorOrdenes } = await supabaseClient
+                    .from('ordenes')
+                    .select(`
+                        id,
+                        cuenta_id,
+                        persona,
+                        orden_items (
+                            id,
+                            nombre_platillo,
+                            cantidad,
+                            precio_unitario,
+                            total
+                        )
+                    `)
+                    .in('cuenta_id', cuentas.map(c => c.id));
+
+                if (errorOrdenes) throw errorOrdenes;
+
+                // Cargar platillos para categorías
+                const { data: platillos, error: errorPlatillos } = await supabaseClient
+                    .from('platillos')
+                    .select('id, nombre, categoria');
+
+                if (errorPlatillos) throw errorPlatillos;
+
+                // Procesar datos para estadísticas
+                procesarEstadisticas(cuentas, ordenes, platillos, filtros);
+
+                // Actualizar interfaz
+                actualizarEstadisticasPrincipales();
+                actualizarTablas();
+                crearGraficas();
+
+            } catch (error) {
+                console.error('Error cargando estadísticas:', error);
+                mostrarError('Error al cargar las estadísticas');
+            }
+        }
+
+        // Obtener filtros actuales
+        function obtenerFiltros() {
+            return {
+                fechaInicio: fechaInicio.value,
+                fechaFin: fechaFin.value,
+                tipo: filtroTipo.value,
+                mesero: filtroMesero.value
+            };
+        }
+
+        // Procesar datos para estadísticas
+        function procesarEstadisticas(cuentas, ordenes, platillos, filtros) {
+            estadisticas = {
+                cuentas: cuentas,
+                ventasTotales: 0,
+                totalCuentas: cuentas.length,
+                ventasPorDia: {},
+                ventasPorTipoPago: {},
+                platosVendidos: {},
+                ventasPorMesero: {},
+                ventasPorCategoria: {},
+                ventasPorHora: {}
+            };
+
+            // Calcular ventas totales y por tipo de pago
+            cuentas.forEach(cuenta => {
+                const total = parseFloat(cuenta.total) || 0;
+                estadisticas.ventasTotales += total;
+
+                // Ventas por tipo de pago
+                const tipoPago = cuenta.tipo_pago || 'no_especificado';
+                if (!estadisticas.ventasPorTipoPago[tipoPago]) {
+                    estadisticas.ventasPorTipoPago[tipoPago] = 0;
+                }
+                estadisticas.ventasPorTipoPago[tipoPago] += total;
+
+                // Ventas por mesero
+                const mesero = cuenta.mesero_nombre || 'No asignado';
+                if (!estadisticas.ventasPorMesero[mesero]) {
+                    estadisticas.ventasPorMesero[mesero] = {
+                        total: 0,
+                        cuentas: 0
+                    };
+                }
+                estadisticas.ventasPorMesero[mesero].total += total;
+                estadisticas.ventasPorMesero[mesero].cuentas += 1;
+
+                // Ventas por día
+                const fecha = new Date(cuenta.fecha_cierre).toISOString().split('T')[0];
+                if (!estadisticas.ventasPorDia[fecha]) {
+                    estadisticas.ventasPorDia[fecha] = 0;
+                }
+                estadisticas.ventasPorDia[fecha] += total;
+
+                // Ventas por hora
+                const hora = new Date(cuenta.fecha_cierre).getHours();
+                if (!estadisticas.ventasPorHora[hora]) {
+                    estadisticas.ventasPorHora[hora] = {
+                        total: 0,
+                        cuentas: 0
+                    };
+                }
+                estadisticas.ventasPorHora[hora].total += total;
+                estadisticas.ventasPorHora[hora].cuentas += 1;
+            });
+
+            // Procesar items de órdenes para platos y categorías
+            if (ordenes) {
+                ordenes.forEach(orden => {
+                    if (orden.orden_items) {
+                        orden.orden_items.forEach(item => {
+                            const nombrePlatillo = item.nombre_platillo;
+                            const cantidad = item.cantidad;
+                            const total = parseFloat(item.total) || 0;
+
+                            // Platos vendidos
+                            if (!estadisticas.platosVendidos[nombrePlatillo]) {
+                                estadisticas.platosVendidos[nombrePlatillo] = {
+                                    cantidad: 0,
+                                    total: 0
+                                };
+                            }
+                            estadisticas.platosVendidos[nombrePlatillo].cantidad += cantidad;
+                            estadisticas.platosVendidos[nombrePlatillo].total += total;
+
+                            // Ventas por categoría
+                            const platilloInfo = platillos.find(p => p.nombre === nombrePlatillo);
+                            const categoria = platilloInfo ? platilloInfo.categoria : 'Sin categoría';
+
+                            if (!estadisticas.ventasPorCategoria[categoria]) {
+                                estadisticas.ventasPorCategoria[categoria] = {
+                                    cantidad: 0,
+                                    total: 0
+                                };
+                            }
+                            estadisticas.ventasPorCategoria[categoria].cantidad += cantidad;
+                            estadisticas.ventasPorCategoria[categoria].total += total;
+                        });
+                    }
+                });
+            }
+        }
+
+        // Actualizar estadísticas principales
+        function actualizarEstadisticasPrincipales() {
+            totalVentas.textContent = `$${estadisticas.ventasTotales.toFixed(2)}`;
+            totalCuentas.textContent = estadisticas.totalCuentas;
+
+            const promedio = estadisticas.totalCuentas > 0 ?
+                estadisticas.ventasTotales / estadisticas.totalCuentas : 0;
+            promedioCuenta.textContent = `$${promedio.toFixed(2)}`;
+
+            // Plato más vendido
+            if (Object.keys(estadisticas.platosVendidos).length > 0) {
+                const platoMasVendidoNombre = Object.keys(estadisticas.platosVendidos)
+                    .reduce((a, b) => estadisticas.platosVendidos[a].cantidad > estadisticas.platosVendidos[b].cantidad ? a : b);
+                platoMasVendido.textContent = platoMasVendidoNombre;
+            } else {
+                platoMasVendido.textContent = '-';
+            }
+        }
+
+        // Actualizar tablas de datos
+        function actualizarTablas() {
+            // Tabla de platos
+            actualizarTablaPlatos();
+
+            // Tabla de meseros
+            actualizarTablaMeseros();
+
+            // Tabla de categorías
+            actualizarTablaCategorias();
+
+            // Tabla de horas
+            actualizarTablaHoras();
+        }
+
+        function actualizarTablaPlatos() {
+            const platosOrdenados = Object.entries(estadisticas.platosVendidos)
+                .sort((a, b) => b[1].cantidad - a[1].cantidad)
+                .slice(0, 10);
+
+            tablaPlatos.innerHTML = '';
+
+            platosOrdenados.forEach(([nombre, datos], index) => {
+                const porcentaje = (datos.total / estadisticas.ventasTotales * 100).toFixed(1);
+                const row = document.createElement('tr');
+
+                row.innerHTML = `
+                    <td><span class="rank-badge ${index < 3 ? `rank-${index + 1}` : ''}">${index + 1}</span></td>
+                    <td>${nombre}</td>
+                    <td>${datos.cantidad}</td>
+                    <td>$${datos.total.toFixed(2)}</td>
+                    <td>${porcentaje}%</td>
+                `;
+
+                tablaPlatos.appendChild(row);
+            });
+        }
+
+        function actualizarTablaMeseros() {
+            const meserosOrdenados = Object.entries(estadisticas.ventasPorMesero)
+                .sort((a, b) => b[1].total - a[1].total);
+
+            tablaMeseros.innerHTML = '';
+
+            meserosOrdenados.forEach(([nombre, datos], index) => {
+                const promedio = datos.cuentas > 0 ? datos.total / datos.cuentas : 0;
+                const row = document.createElement('tr');
+
+                row.innerHTML = `
+                    <td><span class="rank-badge ${index < 3 ? `rank-${index + 1}` : ''}">${index + 1}</span></td>
+                    <td>${nombre}</td>
+                    <td>${datos.cuentas}</td>
+                    <td>$${datos.total.toFixed(2)}</td>
+                    <td>$${promedio.toFixed(2)}</td>
+                `;
+
+                tablaMeseros.appendChild(row);
+            });
+        }
+
+        function actualizarTablaCategorias() {
+            const categoriasOrdenadas = Object.entries(estadisticas.ventasPorCategoria)
+                .sort((a, b) => b[1].total - a[1].total);
+
+            tablaCategorias.innerHTML = '';
+
+            categoriasOrdenadas.forEach(([categoria, datos]) => {
+                const porcentaje = (datos.total / estadisticas.ventasTotales * 100).toFixed(1);
+                const row = document.createElement('tr');
+
+                row.innerHTML = `
+                    <td>${categoria}</td>
+                    <td>${datos.cantidad}</td>
+                    <td>$${datos.total.toFixed(2)}</td>
+                    <td>${porcentaje}%</td>
+                `;
+
+                tablaCategorias.appendChild(row);
+            });
+        }
+
+        function actualizarTablaHoras() {
+            const horasOrdenadas = Object.entries(estadisticas.ventasPorHora)
+                .sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+
+            tablaHoras.innerHTML = '';
+
+            horasOrdenadas.forEach(([hora, datos]) => {
+                const promedio = datos.cuentas > 0 ? datos.total / datos.cuentas : 0;
+                const horaFormateada = `${hora}:00 - ${parseInt(hora) + 1}:00`;
+                const row = document.createElement('tr');
+
+                row.innerHTML = `
+                    <td>${horaFormateada}</td>
+                    <td>${datos.cuentas}</td>
+                    <td>$${datos.total.toFixed(2)}</td>
+                    <td>$${promedio.toFixed(2)}</td>
+                `;
+
+                tablaHoras.appendChild(row);
+            });
+        }
+
+        // Crear gráficas
+        function crearGraficas() {
+            // Destruir gráficas existentes
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+
+            // Gráfica de ventas por día
+            crearGraficaVentas();
+
+            // Gráfica de tipos de pago
+            crearGraficaPagos();
+
+            // Gráfica de platos más vendidos
+            crearGraficaPlatos();
+
+            // Gráfica de desempeño de meseros
+            crearGraficaMeseros();
+        }
+
+        // Escuchar cambios en los selects de tipo de reporte y tipo de ventas
+        document.getElementById('chartVentasTipo').addEventListener('change', crearGraficaVentas);
+        filtroTipo.addEventListener('change', () => {
+            cargarEstadisticas(); // Recarga datos y gráficas agrupando según el tipo seleccionado
+        });
+
+        // Modifica crearGraficaVentas para filtrar por tipo de pago y agrupar según filtroTipo
+        function crearGraficaVentas() {
+            const ctx = document.getElementById('ventasChart').getContext('2d');
+            const tipoPago = document.getElementById('chartVentasTipo').value;
+            const agrupamiento = filtroTipo.value; // 'diario', 'semanal', 'mensual', 'anual'
+
+            // Agrupa ventas por fecha según filtroTipo y tipoPago
+            let agrupadas = {};
+            estadisticas.cuentas.forEach(cuenta => {
+                // Filtra por tipo de pago si no es 'total'
+                if (tipoPago !== 'total' && cuenta.tipo_pago !== tipoPago) return;
+
+                const fechaObj = new Date(cuenta.fecha_cierre);
+                let clave = '';
+                if (agrupamiento === 'diario') {
+                    clave = fechaObj.toISOString().split('T')[0];
+                } else if (agrupamiento === 'semanal') {
+                    // Semana ISO: año + semana
+                    const d = new Date(Date.UTC(fechaObj.getFullYear(), fechaObj.getMonth(), fechaObj.getDate()));
+                    const dayNum = d.getUTCDay() || 7;
+                    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+                    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+                    const weekNum = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+                    clave = `${d.getUTCFullYear()}-S${weekNum}`;
+                } else if (agrupamiento === 'mensual') {
+                    clave = `${fechaObj.getFullYear()}-${(fechaObj.getMonth() + 1).toString().padStart(2, '0')}`;
+                } else if (agrupamiento === 'anual') {
+                    clave = `${fechaObj.getFullYear()}`;
+                }
+                if (!agrupadas[clave]) agrupadas[clave] = 0;
+                agrupadas[clave] += parseFloat(cuenta.total) || 0;
+            });
+
+            const labels = Object.keys(agrupadas).sort();
+            const ventas = labels.map(l => agrupadas[l]);
+
+            // Formato de etiquetas
+            let labelFormat = l => l;
+            if (agrupamiento === 'diario') labelFormat = l => new Date(l).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
+            if (agrupamiento === 'mensual') labelFormat = l => {
+                const [y, m] = l.split('-');
+                return `${y}-${m}`;
+            };
+            if (agrupamiento === 'anual') labelFormat = l => l;
+            if (agrupamiento === 'semanal') labelFormat = l => l;
+
+            if (charts.ventas) charts.ventas.destroy();
+            charts.ventas = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels.map(labelFormat),
+                    datasets: [{
+                        label: `Ventas (${tipoPago === 'total' ? 'Todas' : tipoPago.charAt(0).toUpperCase() + tipoPago.slice(1)})`,
+                        data: ventas,
+                        borderColor: '#fb74a2',
+                        backgroundColor: 'rgba(251, 116, 162, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function (value) {
+                                    return '$' + value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function crearGraficaPagos() {
+            const ctx = document.getElementById('pagosChart').getContext('2d');
+            const tipos = Object.keys(estadisticas.ventasPorTipoPago);
+            const valores = tipos.map(tipo => estadisticas.ventasPorTipoPago[tipo]);
+
+            charts.pagos = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: tipos.map(t => t.charAt(0).toUpperCase() + t.slice(1)),
+                    datasets: [{
+                        data: valores,
+                        backgroundColor: colores.slice(0, tipos.length),
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function crearGraficaPlatos() {
+            const ctx = document.getElementById('platosChart').getContext('2d');
+            const platosOrdenados = Object.entries(estadisticas.platosVendidos)
+                .sort((a, b) => b[1].cantidad - a[1].cantidad)
+                .slice(0, 5);
+
+            const nombres = platosOrdenados.map(([nombre]) => nombre);
+            const cantidades = platosOrdenados.map(([, datos]) => datos.cantidad);
+
+            charts.platos = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: nombres,
+                    datasets: [{
+                        label: 'Cantidad Vendida',
+                        data: cantidades,
+                        backgroundColor: colores.slice(0, nombres.length),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function crearGraficaMeseros() {
+            const ctx = document.getElementById('meserosChart').getContext('2d');
+            const meserosOrdenados = Object.entries(estadisticas.ventasPorMesero)
+                .sort((a, b) => b[1].total - a[1].total)
+                .slice(0, 5);
+
+            const nombres = meserosOrdenados.map(([nombre]) => nombre);
+            const ventas = meserosOrdenados.map(([, datos]) => datos.total);
+
+            charts.meseros = new Chart(ctx, {
+                type: 'polarArea',
+                data: {
+                    labels: nombres,
+                    datasets: [{
+                        data: ventas,
+                        backgroundColor: colores.slice(0, nombres.length),
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Configurar event listeners
+        function configurarEventListeners() {
+            // Tema toggle
+            themeToggle.addEventListener('click', toggleTema);
+
+            // Logout
+            logoutBtn.addEventListener('click', cerrarSesion);
+
+            // Filtros
+            aplicarFiltrosBtn.addEventListener('click', aplicarFiltros);
+            limpiarFiltrosBtn.addEventListener('click', limpiarFiltros);
+            actualizarBtn.addEventListener('click', cargarEstadisticas);
+
+            // Exportar
+            exportarCSVBtn.addEventListener('click', exportarCSV);
+            exportarPDFBtn.addEventListener('click', exportarPDF);
+            exportarExcelBtn.addEventListener('click', exportarExcel);
+        }
+
+        // Toggle tema claro/oscuro
+        function toggleTema() {
+            document.body.classList.toggle('dark-theme');
+            if (document.body.classList.contains('dark-theme')) {
+                localStorage.setItem('theme', 'dark');
+                themeToggle.textContent = '☀️';
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeToggle.textContent = '🌙';
+            }
+        }
+
+        // Cerrar sesión
+        async function cerrarSesion() {
+            await supabaseClient.auth.signOut();
+            localStorage.removeItem('user');
+            window.location.href = 'index.html';
+        }
+
+        // Aplicar filtros
+        function aplicarFiltros() {
+            cargarEstadisticas();
+        }
+
+        // Limpiar filtros
+        function limpiarFiltros() {
+            const hoy = new Date();
+            const hace30Dias = new Date();
+            hace30Dias.setDate(hoy.getDate() - 30);
+
+            fechaInicio.valueAsDate = hace30Dias;
+            fechaFin.valueAsDate = hoy;
+            filtroTipo.value = 'diario';
+            filtroMesero.value = 'todos';
+
+            aplicarFiltros();
+        }
+
+        // Exportar a CSV
+        function exportarCSV() {
+            // Implementar exportación a CSV
+            mostrarExito('Función de exportación a CSV lista para implementar');
+        }
+
+        // Exportar a PDF
+        function exportarPDF() {
+            // Implementar exportación a PDF
+            mostrarExito('Función de exportación a PDF lista para implementar');
+        }
+
+        // Exportar a Excel
+        function exportarExcel() {
+            // Implementar exportación a Excel
+            mostrarExito('Función de exportación a Excel lista para implementar');
+        }
+
+        // Mostrar error
+        function mostrarError(mensaje) {
+            alert(`Error: ${mensaje}`);
+        }
+
+        // Mostrar éxito
+        function mostrarExito(mensaje) {
+            alert(`✅ ${mensaje}`);
+        }
+
+        // Inicializar la aplicación
+        init();
+    </script>
+</body>
+
+</html>

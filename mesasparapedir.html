@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La cayetana - Mesas para Pedidos</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="shortcut icon" href="logocaye.png" />
+    <link rel="stylesheet" href="/mesasparapedir.css">
+</head>
+
+<body>
+    <header>
+        <div class="container header-content">
+            <a href="main.html" class="logo">
+                <img src="/titulo-doublebass.png" alt="Título con fuente Doublebass" height="50px" />
+            </a>
+            <div class="nav-buttons">
+                <span id="userRole">Mesero</span>
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+                <a href="main.html" class="btn btn-secondary">Volver al Inicio</a>
+                <button class="btn btn-danger" id="logoutBtn">Cerrar Sesión</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">Seleccionar Mesa para Pedido</h1>
+                <div class="filters">
+                    <div class="filter-group">
+                        <label for="filterEstado">Mostrar:</label>
+                        <select id="filterEstado">
+                            <option value="todas">Todas las mesas</option>
+                            <option value="libres">Solo mesas libres</option>
+                            <option value="ocupadas">Solo mesas ocupadas</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="sortMesas">Ordenar por:</label>
+                        <select id="sortMesas">
+                            <option value="numero">Número</option>
+                            <option value="estado">Estado</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalMesas">0</div>
+                    <div class="stat-label">Total Mesas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="mesasLibres">0</div>
+                    <div class="stat-label">Mesas Libres</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="mesasOcupadas">0</div>
+                    <div class="stat-label">Mesas Ocupadas</div>
+                </div>
+                <div class="stat-card" style="display: none;">
+                    <div class="stat-number" id="cuentasAbiertas">0</div>
+                    <div class="stat-label">Cuentas Abiertas</div>
+                </div>
+            </div>
+
+            <div class="mesas-grid" id="mesasGrid">
+                <!-- Las mesas se cargarán dinámicamente aquí -->
+            </div>
+
+            <div class="empty-state hidden" id="emptyState">
+                <p>No se encontraron mesas</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>© 2025 La cayetana - Sistema de Gestión para Restaurantes</p>
+        </div>
+    </footer>
+
+    <script>
+        // Inicializar Supabase
+        const SUPABASE_URL = 'https://ouglkdanbxomammpqhmc.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91Z2xrZGFuYnhvbWFtbXBxaG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0OTc2NjUsImV4cCI6MjA3NDA3MzY2NX0.MV2IJ8LGCASbf6qgZuIkQ_CWl0i-w9UcmrlyUb1E4WI';
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Elementos DOM
+        const themeToggle = document.getElementById('themeToggle');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userRoleSpan = document.getElementById('userRole');
+        const filterEstado = document.getElementById('filterEstado');
+        const sortMesas = document.getElementById('sortMesas');
+        const mesasGrid = document.getElementById('mesasGrid');
+        const emptyState = document.getElementById('emptyState');
+        const totalMesas = document.getElementById('totalMesas');
+        const mesasLibres = document.getElementById('mesasLibres');
+        const mesasOcupadas = document.getElementById('mesasOcupadas');
+        const cuentasAbiertas = document.getElementById('cuentasAbiertas');
+
+        // Variables de estado
+        let currentUser = null;
+        let mesas = [];
+        let cuentas = [];
+
+        // Inicializar la aplicación
+        async function init() {
+            // Verificar autenticación
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Cargar datos de usuario
+            const userData = JSON.parse(localStorage.getItem('user'));
+            if (userData) {
+                currentUser = userData;
+                userRoleSpan.textContent = userData.role;
+            }
+
+            // Cargar mesas y cuentas
+            await cargarDatos();
+
+            // Configurar event listeners
+            configurarEventListeners();
+
+            // Verificar tema
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeToggle.textContent = '☀️';
+            }
+        }
+
+        // Cargar mesas y cuentas desde Supabase
+        async function cargarDatos() {
+            try {
+                // Cargar mesas
+                const { data: mesasData, error: mesasError } = await supabaseClient
+                    .from('mesas')
+                    .select('*')
+                    .order('numero', { ascending: true });
+
+                if (mesasError) throw mesasError;
+
+                mesas = mesasData || [];
+
+                // Cargar cuentas abiertas
+                const { data: cuentasData, error: cuentasError } = await supabaseClient
+                    .from('cuentas')
+                    .select('*')
+                    .eq('status', 0); // Solo cuentas abiertas
+
+                if (cuentasError) throw cuentasError;
+
+                cuentas = cuentasData || [];
+
+                // Actualizar estado de mesas según cuentas abiertas
+                actualizarEstadosMesas();
+                renderizarMesas();
+                actualizarEstadisticas();
+
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                mostrarError('Error al cargar las mesas');
+            }
+        }
+
+        // Actualizar estado de mesas según cuentas abiertas
+        function actualizarEstadosMesas() {
+            // Marcar mesas como ocupadas si tienen cuenta abierta
+            mesas.forEach(mesa => {
+                const cuenta = cuentas.find(c => c.mesa_id === mesa.id);
+                mesa.tieneCuentaAbierta = !!cuenta;
+                // Si tiene cuenta abierta, forzar estado ocupado
+                if (mesa.tieneCuentaAbierta) {
+                    mesa.ocupado = true;
+                }
+            });
+        }
+
+        // Renderizar mesas en la cuadrícula
+        function renderizarMesas() {
+            mesasGrid.innerHTML = '';
+
+            let mesasFiltradas = [...mesas];
+
+            // Aplicar filtros
+            const filtro = filterEstado.value;
+            if (filtro === 'libres') {
+                mesasFiltradas = mesasFiltradas.filter(m => !m.ocupado);
+            } else if (filtro === 'ocupadas') {
+                mesasFiltradas = mesasFiltradas.filter(m => m.ocupado);
+            }
+
+            // Aplicar ordenamiento
+            const orden = sortMesas.value;
+            if (orden === 'estado') {
+                mesasFiltradas.sort((a, b) => {
+                    if (a.ocupado === b.ocupado) {
+                        return a.numero - b.numero;
+                    }
+                    return a.ocupado ? 1 : -1;
+                });
+            } else {
+                mesasFiltradas.sort((a, b) => a.numero - b.numero);
+            }
+
+            if (mesasFiltradas.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            mesasFiltradas.forEach(mesa => {
+                const mesaCard = document.createElement('div');
+                mesaCard.className = `mesa-card ${mesa.ocupado ? 'ocupada' : 'libre'}`;
+
+                mesaCard.innerHTML = `
+    <img class="mesa-visual" src="${mesa.ocupado ? '/mesita3.png' : '/mesita2.png'}" 
+         alt="${mesa.ocupado ? 'Mesa ocupada' : 'Mesa libre'}">
+    <div class="mesa-numero">${mesa.numero}</div>
+    <div class="mesa-estado ${mesa.ocupado ? 'estado-ocupada' : 'estado-libre'}">
+        ${mesa.ocupado ? 'Ocupada' : 'Libre'}
+    </div>
+    <div class="mesa-info" style="display: none;">
+        ${mesa.ocupado ? '🕒 Tomar pedido' : '✅ Disponible'}
+    </div>
+    ${mesa.tieneCuentaAbierta ? '<div class="mesa-info" style="display: none;">💳 Cuenta abierta</div>' : ''}
+`;
+
+                mesaCard.onclick = () => {
+                    if (!mesa.ocupado) {
+                        // Crear modal dinámicamente
+                        const modal = document.createElement("div");
+                        modal.id = "modalConfirmacion";
+                        modal.className = "modal";
+                        modal.innerHTML = `
+            <div class="modal-contenido">
+                <p>¿Desea activar la cuenta de esta mesa?</p>
+                <div class="modal-actions">
+                    <button id="confirmarBtn" class="modal-btn confirm">Sí</button>
+                    <button id="cancelarBtn" class="modal-btn cancel">Cancelar</button>
+                </div>
+            </div>
+        `;
+                        document.body.appendChild(modal);
+                        // Mostrar modal
+                        modal.style.display = "flex";
+
+                        // Configurar botones
+                        modal.querySelector("#confirmarBtn").onclick = () => {
+                            seleccionarMesa(mesa.id);
+                            modal.remove(); // cerrar y eliminar modal
+                        };
+
+                        modal.querySelector("#cancelarBtn").onclick = () => {
+                            modal.remove(); // cerrar y eliminar modal
+                        };
+                    } else {
+                        // Si está ocupada, simplemente ver pedido
+                        seleccionarMesa(mesa.id);
+                    }
+                };
+
+
+
+                mesasGrid.appendChild(mesaCard);
+            });
+        }
+
+        // Actualizar estadísticas
+        function actualizarEstadisticas() {
+            totalMesas.textContent = mesas.length;
+            mesasLibres.textContent = mesas.filter(m => !m.ocupado).length;
+            mesasOcupadas.textContent = mesas.filter(m => m.ocupado).length;
+            cuentasAbiertas.textContent = cuentas.length;
+        }
+
+        // Seleccionar mesa para pedido
+        function seleccionarMesa(mesaId) {
+            // Redirigir a la página de pedidos con el ID de la mesa
+            window.location.href = `pedidos.html?mesa_id=${mesaId}`;
+        }
+
+        // Configurar event listeners
+        function configurarEventListeners() {
+            // Tema toggle
+            themeToggle.addEventListener('click', toggleTema);
+
+            // Logout
+            logoutBtn.addEventListener('click', cerrarSesion);
+
+            // Filtros
+            filterEstado.addEventListener('change', () => renderizarMesas());
+            sortMesas.addEventListener('change', () => renderizarMesas());
+
+            // Actualizar datos cada 30 segundos
+            setInterval(() => {
+                cargarDatos();
+            }, 30000);
+        }
+
+        // Toggle tema claro/oscuro
+        function toggleTema() {
+            document.body.classList.toggle('dark-theme');
+            if (document.body.classList.contains('dark-theme')) {
+                localStorage.setItem('theme', 'dark');
+                themeToggle.textContent = '☀️';
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeToggle.textContent = '🌙';
+            }
+        }
+
+        // Cerrar sesión
+        async function cerrarSesion() {
+            await supabaseClient.auth.signOut();
+            localStorage.removeItem('user');
+            window.location.href = 'index.html';
+        }
+
+        // Mostrar error
+        function mostrarError(mensaje) {
+            alert(`Error: ${mensaje}`);
+        }
+
+        // Hacer función global para el botón
+        window.seleccionarMesa = seleccionarMesa;
+
+        // Inicializar la aplicación
+        init();
+    </script>
+</body>
+
+</html>

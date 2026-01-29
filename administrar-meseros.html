@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La cayetana - Administrar Meseros</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="shortcut icon" href="logocaye.png" />
+    <style>
+        :root {
+            --primary-color: #fb74a2;
+            --primary-dark: #e05a8a;
+            --text-color: #333;
+            --bg-color: #f9f9f9;
+            --card-bg: #ffffff;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+        }
+
+        .dark-theme {
+            --primary-color: #fb74a2;
+            --primary-dark: #ff96b8;
+            --text-color: #f0f0f0;
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            width: 100%;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 1rem 0;
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo img {
+            height: 50px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        .main-content {
+            padding: 2rem 0;
+            flex-grow: 1;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .page-title {
+            color: var(--primary-color);
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .search-bar button {
+            white-space: nowrap;
+        }
+
+        .table-container {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .meseros-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .meseros-table th,
+        .meseros-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .dark-theme .meseros-table th,
+        .dark-theme .meseros-table td {
+            border-bottom: 1px solid #444;
+        }
+
+        .meseros-table th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        .meseros-table tr:hover {
+            background-color: rgba(251, 116, 162, 0.1);
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .role-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .role-admin {
+            background-color: #ffeaa7;
+            color: #d35400;
+        }
+
+        .role-mesero {
+            background-color: #d6eaf8;
+            color: #2874a6;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .modal-title {
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            position: absolute;
+            top: -10px;
+            right: -10px;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, .3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .dark-theme .empty-state {
+            color: #ccc;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: auto;
+            background-color: var(--card-bg);
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .nav-buttons {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-bar {
+                flex-direction: column;
+            }
+
+            .meseros-table {
+                display: block;
+                overflow-x: auto;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .modal-content {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+
+            .close-modal {
+                top: -5px;
+                right: -5px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container header-content">
+            <a href="main.html" class="logo">
+                <img src="./titulo-doublebass.png" alt="Título con fuente Doublebass" height="50px" />
+            </a>
+            <div class="nav-buttons">
+                <span id="userRole">Administrador</span>
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+                <a href="main.html" class="btn btn-secondary">Volver</a>
+                <button class="btn btn-danger" id="logoutBtn">Cerrar Sesión</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">Administración de Meseros</h1>
+                <button class="btn btn-success" id="nuevoMeseroBtn">Nuevo Mesero</button>
+            </div>
+
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Buscar por nombre...">
+                <button class="btn" id="searchBtn">Buscar</button>
+            </div>
+
+            <div class="table-container">
+                <table class="meseros-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Fecha Registro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="meserosTableBody">
+                        <!-- Los meseros se cargarán dinámicamente aquí -->
+                    </tbody>
+                </table>
+                <div class="empty-state hidden" id="emptyState">
+                    <p>No se encontraron meseros</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal para nuevo/editar mesero -->
+    <div class="modal" id="meseroModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Nuevo Mesero</h2>
+                <button class="close-modal" id="closeModal">×</button>
+            </div>
+            <form id="meseroForm">
+                <input type="hidden" id="meseroId">
+                <div class="form-group">
+                    <label for="meseroNombre">Nombre Completo</label>
+                    <input type="text" id="meseroNombre" required>
+                </div>
+                <div class="form-group">
+                    <label for="meseroEmail">Email</label>
+                    <input type="email" id="meseroEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="meseroPassword">Contraseña</label>
+                    <input type="password" id="meseroPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="meseroRol">Rol</label>
+                    <select id="meseroRol" required>
+                        <option value="mesero">Mesero</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="meseroActivo">Estado</label>
+                    <select id="meseroActivo" required>
+                        <option value="true">Activo</option>
+                        <option value="false">Inactivo</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelModal">Cancelar</button>
+                    <button type="submit" class="btn btn-success" id="submitMeseroBtn">
+                        <span id="submitText">Crear Mesero</span>
+                        <span id="submitLoading" class="loading" style="display: none;"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación de eliminación -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Confirmar Eliminación</h2>
+                <button class="close-modal" id="closeConfirmModal">×</button>
+            </div>
+            <div class="form-group">
+                <p id="confirmMessage">¿Estás seguro de que quieres eliminar este mesero?</p>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="cancelConfirmModal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>© 2025 La cayetana - Sistema de Gestión para Restaurantes</p>
+        </div>
+    </footer>
+
+    <script>
+        // Inicializar Supabase
+        const SUPABASE_URL = 'https://ouglkdanbxomammpqhmc.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91Z2xrZGFuYnhvbWFtbXBxaG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0OTc2NjUsImV4cCI6MjA3NDA3MzY2NX0.MV2IJ8LGCASbf6qgZuIkQ_CWl0i-w9UcmrlyUb1E4WI';
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Elementos DOM
+        const themeToggle = document.getElementById('themeToggle');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userRoleSpan = document.getElementById('userRole');
+        const nuevoMeseroBtn = document.getElementById('nuevoMeseroBtn');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const meserosTableBody = document.getElementById('meserosTableBody');
+        const emptyState = document.getElementById('emptyState');
+
+        // Modales
+        const meseroModal = document.getElementById('meseroModal');
+        const confirmModal = document.getElementById('confirmModal');
+        const meseroForm = document.getElementById('meseroForm');
+
+        // Variables de estado
+        let currentUser = null;
+        let meseros = [];
+        let meseroToDelete = null;
+
+        // Inicializar la aplicación
+        async function init() {
+            // Verificar autenticación
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Cargar datos de usuario
+            const userData = JSON.parse(localStorage.getItem('user'));
+            if (userData) {
+                currentUser = userData;
+                userRoleSpan.textContent = userData.role;
+
+                // Verificar si es admin
+                if (userData.role !== 'admin') {
+                    mostrarError('No tienes permisos para acceder a esta página');
+                    window.location.href = 'main.html';
+                    return;
+                }
+            }
+
+            // Cargar meseros
+            await cargarMeseros();
+
+            // Configurar event listeners
+            configurarEventListeners();
+
+            // Verificar tema
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeToggle.textContent = '☀️';
+            }
+        }
+
+        // Cargar meseros desde Supabase
+        async function cargarMeseros() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('perfiles')
+                    .select('*')
+                    .order('creado_en', { ascending: false });
+
+                if (error) throw error;
+
+                meseros = data || [];
+                renderizarMeseros();
+            } catch (error) {
+                console.error('Error cargando meseros:', error);
+                mostrarError('Error al cargar los meseros');
+            }
+        }
+
+        // Renderizar meseros en la tabla
+        function renderizarMeseros() {
+            meserosTableBody.innerHTML = '';
+
+            if (meseros.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            meseros.forEach(mesero => {
+                const row = document.createElement('tr');
+
+                // Formatear fecha
+                const fecha = new Date(mesero.creado_en).toLocaleDateString('es-ES', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+
+                row.innerHTML = `
+                    <td>${mesero.nombre}</td>
+                    <td>
+                        <span class="role-badge role-${mesero.role}">
+                            ${mesero.role === 'admin' ? 'Administrador' : 'Mesero'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge status-${mesero.activo ? 'active' : 'inactive'}">
+                            ${mesero.activo ? 'Activo' : 'Inactivo'}
+                        </span>
+                    </td>
+                    <td>${fecha}</td>
+                    <td class="action-buttons">
+                        <button class="btn btn-warning btn-editar" data-id="${mesero.id}">Editar</button>
+                        <button class="btn btn-danger btn-eliminar" data-id="${mesero.id}">Eliminar</button>
+                    </td>
+                `;
+
+                meserosTableBody.appendChild(row);
+            });
+
+            // Añadir event listeners a los botones
+            document.querySelectorAll('.btn-editar').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.dataset.id;
+                    const mesero = meseros.find(m => m.id === id);
+                    if (mesero) abrirModalMesero(mesero);
+                });
+            });
+
+            document.querySelectorAll('.btn-eliminar').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.dataset.id;
+                    const mesero = meseros.find(m => m.id === id);
+                    if (mesero) confirmarEliminacion(mesero);
+                });
+            });
+        }
+
+        // Abrir modal para editar/crear mesero
+        function abrirModalMesero(mesero = null) {
+            const modalTitle = document.getElementById('modalTitle');
+            const meseroId = document.getElementById('meseroId');
+            const meseroNombre = document.getElementById('meseroNombre');
+            const meseroEmail = document.getElementById('meseroEmail');
+            const meseroPassword = document.getElementById('meseroPassword');
+            const meseroRol = document.getElementById('meseroRol');
+            const meseroActivo = document.getElementById('meseroActivo');
+            const submitText = document.getElementById('submitText');
+
+            if (mesero) {
+                modalTitle.textContent = 'Editar Mesero';
+                meseroId.value = mesero.id;
+                meseroNombre.value = mesero.nombre;
+                meseroEmail.value = ''; // No mostramos el email en edición
+                meseroEmail.disabled = true; // No se puede cambiar el email
+                meseroEmail.placeholder = 'El email no se puede modificar';
+                meseroPassword.required = false;
+                meseroPassword.placeholder = 'Dejar vacío para no cambiar';
+                meseroRol.value = mesero.role;
+                meseroActivo.value = mesero.activo.toString();
+                submitText.textContent = 'Actualizar Mesero';
+            } else {
+                modalTitle.textContent = 'Nuevo Mesero';
+                meseroId.value = '';
+                meseroNombre.value = '';
+                meseroEmail.value = '';
+                meseroEmail.disabled = false;
+                meseroEmail.placeholder = 'correo@ejemplo.com';
+                meseroPassword.required = true;
+                meseroPassword.value = '';
+                meseroPassword.placeholder = '';
+                meseroRol.value = 'mesero';
+                meseroActivo.value = 'true';
+                submitText.textContent = 'Crear Mesero';
+            }
+
+            meseroModal.style.display = 'flex';
+        }
+
+        // Configurar event listeners
+        function configurarEventListeners() {
+            // Tema toggle
+            themeToggle.addEventListener('click', toggleTema);
+
+            // Logout
+            logoutBtn.addEventListener('click', cerrarSesion);
+
+            // Nuevo mesero
+            nuevoMeseroBtn.addEventListener('click', () => abrirModalMesero());
+
+            // Buscar
+            searchBtn.addEventListener('click', buscarMeseros);
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') buscarMeseros();
+            });
+
+            // Cerrar modales
+            document.getElementById('closeModal').addEventListener('click', cerrarModales);
+            document.getElementById('cancelModal').addEventListener('click', cerrarModales);
+            document.getElementById('closeConfirmModal').addEventListener('click', cerrarModales);
+            document.getElementById('cancelConfirmModal').addEventListener('click', cerrarModales);
+
+            // Forms
+            meseroForm.addEventListener('submit', guardarMesero);
+            document.getElementById('confirmDeleteBtn').addEventListener('click', eliminarMesero);
+
+            // Cerrar modal al hacer clic fuera
+            window.addEventListener('click', (e) => {
+                if (e.target === meseroModal) cerrarModales();
+                if (e.target === confirmModal) cerrarModales();
+            });
+        }
+
+        // Toggle tema claro/oscuro
+        function toggleTema() {
+            document.body.classList.toggle('dark-theme');
+            if (document.body.classList.contains('dark-theme')) {
+                localStorage.setItem('theme', 'dark');
+                themeToggle.textContent = '☀️';
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeToggle.textContent = '🌙';
+            }
+        }
+
+        // Cerrar sesión
+        async function cerrarSesion() {
+            await supabaseClient.auth.signOut();
+            localStorage.removeItem('user');
+            window.location.href = 'index.html';
+        }
+
+        // Cerrar modales
+        function cerrarModales() {
+            meseroModal.style.display = 'none';
+            confirmModal.style.display = 'none';
+            meseroForm.reset();
+        }
+
+        // Buscar meseros
+        function buscarMeseros() {
+            const searchTerm = searchInput.value.toLowerCase();
+
+            if (!searchTerm) {
+                renderizarMeseros();
+                return;
+            }
+
+            const filtered = meseros.filter(mesero =>
+                mesero.nombre.toLowerCase().includes(searchTerm)
+            );
+
+            if (filtered.length === 0) {
+                meserosTableBody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                // Renderizar resultados filtrados
+                meserosTableBody.innerHTML = '';
+                filtered.forEach(mesero => {
+                    const row = document.createElement('tr');
+                    const fecha = new Date(mesero.creado_en).toLocaleDateString();
+
+                    row.innerHTML = `
+                        <td>${mesero.nombre}</td>
+                        <td>
+                            <span class="role-badge role-${mesero.role}">
+                                ${mesero.role === 'admin' ? 'Administrador' : 'Mesero'}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-badge status-${mesero.activo ? 'active' : 'inactive'}">
+                                ${mesero.activo ? 'Activo' : 'Inactivo'}
+                            </span>
+                        </td>
+                        <td>${fecha}</td>
+                        <td class="action-buttons">
+                            <button class="btn btn-warning btn-editar" data-id="${mesero.id}">Editar</button>
+                            <button class="btn btn-danger btn-eliminar" data-id="${mesero.id}">Eliminar</button>
+                        </td>
+                    `;
+
+                    meserosTableBody.appendChild(row);
+                });
+
+                // Re-asignar event listeners
+                document.querySelectorAll('.btn-editar').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.target.dataset.id;
+                        const mesero = meseros.find(m => m.id === id);
+                        if (mesero) abrirModalMesero(mesero);
+                    });
+                });
+
+                document.querySelectorAll('.btn-eliminar').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.target.dataset.id;
+                        const mesero = meseros.find(m => m.id === id);
+                        if (mesero) confirmarEliminacion(mesero);
+                    });
+                });
+            }
+        }
+
+        // Guardar mesero (crear o actualizar)
+        async function guardarMesero(e) {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitMeseroBtn');
+            const submitText = document.getElementById('submitText');
+            const submitLoading = document.getElementById('submitLoading');
+
+            submitText.style.display = 'none';
+            submitLoading.style.display = 'inline-block';
+            submitBtn.disabled = true;
+
+            try {
+                const meseroId = document.getElementById('meseroId').value;
+                const nombre = document.getElementById('meseroNombre').value;
+                const email = document.getElementById('meseroEmail').value;
+                const password = document.getElementById('meseroPassword').value;
+                const role = document.getElementById('meseroRol').value;
+                const activo = document.getElementById('meseroActivo').value === 'true';
+
+                if (meseroId) {
+                    // Actualizar mesero existente
+                    const updateData = { nombre, role, activo };
+
+                    // Solo actualizar password si se proporcionó uno nuevo
+                    if (password.trim() !== '') {
+                        // Actualizar password en Auth
+                        const { error: authError } = await supabaseClient.auth.updateUser({
+                            password: password
+                        });
+                        if (authError) throw authError;
+                    }
+
+                    // Actualizar perfil
+                    const { error } = await supabaseClient
+                        .from('perfiles')
+                        .update(updateData)
+                        .eq('id', meseroId);
+
+                    if (error) throw error;
+
+                    mostrarExito('Mesero actualizado correctamente');
+                } else {
+                    // Crear nuevo usuario en Auth
+                    const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+                        email,
+                        password,
+                    });
+
+                    if (authError) throw authError;
+
+                    // Crear perfil del mesero
+                    const { error: profileError } = await supabaseClient
+                        .from('perfiles')
+                        .insert([{
+                            id: authData.user.id,
+                            nombre,
+                            role,
+                            activo
+                        }]);
+
+                    if (profileError) {
+                        // Si falla la creación del perfil, intentar eliminar el usuario de auth
+                        await supabaseClient.auth.admin.deleteUser(authData.user.id);
+                        throw profileError;
+                    }
+
+                    mostrarExito('Mesero creado correctamente');
+                }
+
+                await cargarMeseros();
+                cerrarModales();
+
+            } catch (error) {
+                console.error('Error guardando mesero:', error);
+                mostrarError(error.message);
+            } finally {
+                submitText.style.display = 'inline-block';
+                submitLoading.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Confirmar eliminación
+        function confirmarEliminacion(mesero) {
+            meseroToDelete = mesero;
+            document.getElementById('confirmMessage').textContent =
+                `¿Estás seguro de que quieres ${mesero.activo ? 'desactivar' : 'activar'} al mesero "${mesero.nombre}"?`;
+            confirmModal.style.display = 'flex';
+        }
+
+        // Eliminar/activar mesero
+        async function eliminarMesero() {
+            if (!meseroToDelete) return;
+
+            try {
+                // Cambiar estado activo/inactivo
+                const nuevoEstado = !meseroToDelete.activo;
+
+                const { error } = await supabaseClient
+                    .from('perfiles')
+                    .update({ activo: nuevoEstado })
+                    .eq('id', meseroToDelete.id);
+
+                if (error) throw error;
+
+                mostrarExito(`Mesero ${nuevoEstado ? 'activado' : 'desactivado'} correctamente`);
+                await cargarMeseros();
+                cerrarModales();
+
+            } catch (error) {
+                console.error('Error cambiando estado del mesero:', error);
+                mostrarError(error.message);
+            }
+        }
+
+        // Mostrar error
+        function mostrarError(mensaje) {
+            alert(`Error: ${mensaje}`);
+        }
+
+        // Mostrar éxito
+        function mostrarExito(mensaje) {
+            alert(`✅ ${mensaje}`);
+        }
+
+        // Inicializar la aplicación
+        init();
+    </script>
+</body>
+
+</html>

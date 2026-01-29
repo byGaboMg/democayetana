@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>La cayetana - Gestión de Mesas</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="shortcut icon" href="logocaye.png" />
+  <style>
+    :root {
+      --primary-color: #fb74a2;
+      --primary-dark: #e05a8a;
+      --text-color: #333;
+      --bg-color: #f9f9f9;
+      --card-bg: #ffffff;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      --border-radius: 12px;
+      --mesa-libre: #4caf50;
+      --mesa-ocupada: #f44336;
+      --mesa-reservada: #ff9800;
+    }
+
+    .dark-theme {
+      --primary-color: #fb74a2;
+      --primary-dark: #ff96b8;
+      --text-color: #f0f0f0;
+      --bg-color: #1a1a1a;
+      --card-bg: #2d2d2d;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      width: 100%;
+    }
+
+    header {
+      background: linear-gradient(135deg,
+          var(--primary-color),
+          var(--primary-dark));
+      color: white;
+      padding: 1rem 0;
+      box-shadow: var(--shadow);
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo img {
+      height: 50px;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background-color: #6c757d;
+    }
+
+    .btn-secondary:hover {
+      background-color: #5a6268;
+    }
+
+    .btn-danger {
+      background-color: #dc3545;
+      margin-right: auto;
+    }
+
+    .btn-danger:hover {
+      background-color: #c82333;
+    }
+
+    .theme-toggle {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 1.5rem;
+    }
+
+    .main-content {
+      padding: 2rem 0;
+      flex-grow: 1;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .page-title {
+      color: var(--primary-color);
+      margin-right: auto;
+    }
+
+    .mesas-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 20px;
+      margin-top: 1rem;
+    }
+
+    .mesa-card {
+      background-color: var(--card-bg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+      text-align: center;
+      transition: transform 0.3s, box-shadow 0.3s;
+      cursor: pointer;
+      position: relative;
+      border: 3px solid transparent;
+    }
+
+    .mesa-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .mesa-card.libre {
+      border-color: var(--mesa-libre);
+    }
+
+    .mesa-card.ocupada {
+      border-color: var(--mesa-ocupada);
+    }
+
+    .mesa-card.reservada {
+      border-color: var(--mesa-reservada);
+    }
+
+    .mesa-numero {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .mesa-estado {
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: inline-block;
+    }
+
+    .estado-libre {
+      background-color: var(--mesa-libre);
+      color: white;
+    }
+
+    .estado-ocupada {
+      background-color: var(--mesa-ocupada);
+      color: white;
+    }
+
+    .estado-reservada {
+      background-color: var(--mesa-reservada);
+      color: white;
+    }
+
+    .mesa-info {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .dark-theme .mesa-info {
+      color: #ccc;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background-color: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-title {
+      color: var(--primary-color);
+    }
+
+    .close-modal {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 1.5rem;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background-color: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--primary-color);
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .dark-theme .stat-label {
+      color: #ccc;
+    }
+
+    .confirm-delete {
+      display: none;
+      margin-top: 1rem;
+      padding: 1rem;
+      background-color: #fff3f3;
+      border-radius: 8px;
+      border-left: 4px solid #dc3545;
+    }
+
+    .dark-theme .confirm-delete {
+      background-color: #2a1a1a;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      margin-top: auto;
+      background-color: var(--card-bg);
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 768px) {
+      .mesas-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      }
+
+      .header-content {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .nav-buttons {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .stats-bar {
+        grid-template-columns: 1fr;
+      }
+
+      .form-actions {
+        flex-direction: column;
+      }
+
+      .btn-danger {
+        margin-right: 0;
+        order: -1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container header-content">
+      <a href="main.html" class="logo">
+        <img src="./titulo-doublebass.png" alt="Título con fuente Doublebass" height="50px" />
+      </a>
+      <div class="nav-buttons">
+        <span id="userRole">Mesero</span>
+        <button class="theme-toggle" id="themeToggle">🌙</button>
+        <a href="main.html" class="btn btn-secondary">Volver</a>
+        <button class="btn btn-danger" id="logoutBtn">Cerrar Sesión</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="page-header">
+        <h1 class="page-title">Gestión de Mesas</h1>
+        <button class="btn admin-only hidden" id="crearMesaBtn">
+          Crear Mesa
+        </button>
+        <button class="btn admin-only hidden" id="autoCrearBtn">
+          Auto Crear Mesas
+        </button>
+      </div>
+
+      <div class="stats-bar">
+        <div class="stat-card">
+          <div class="stat-number" id="totalMesas">0</div>
+          <div class="stat-label">Total Mesas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="mesasLibres">0</div>
+          <div class="stat-label">Mesas Libres</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="mesasOcupadas">0</div>
+          <div class="stat-label">Mesas Ocupadas</div>
+        </div>
+      </div>
+
+      <div class="mesas-grid" id="mesasGrid">
+        <!-- Las mesas se cargarán dinámicamente aquí -->
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal para crear/editar mesa -->
+  <div class="modal" id="mesaModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Crear Mesa</h2>
+        <button class="close-modal" id="closeModal">×</button>
+      </div>
+      <form id="mesaForm">
+        <input type="hidden" id="mesaId" />
+        <div class="form-group">
+          <label for="mesaNumero">Número de Mesa</label>
+          <input type="number" id="mesaNumero" required min="1" />
+        </div>
+        <div class="form-group">
+          <label for="mesaEstado">Estado</label>
+          <select id="mesaEstado" required>
+            <option value="false">Libre</option>
+            <option value="true">Ocupada</option>
+          </select>
+        </div>
+
+        <div class="confirm-delete" id="confirmDelete">
+          <p>¿Estás seguro de que quieres eliminar esta mesa?</p>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="confirmDeleteNo">
+              Cancelar
+            </button>
+            <button type="button" class="btn btn-danger" id="confirmDeleteYes">
+              Sí, Eliminar
+            </button>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-danger hidden" id="deleteMesaBtn">
+            Eliminar
+          </button>
+          <button type="button" class="btn btn-secondary" id="cancelModal">
+            Cancelar
+          </button>
+          <button type="submit" class="btn" id="submitMesaBtn">
+            <span id="submitText">Guardar</span>
+            <span id="submitLoading" class="loading" style="display: none"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal para auto crear mesas -->
+  <div class="modal" id="autoCrearModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Crear Múltiples Mesas</h2>
+        <button class="close-modal" id="closeAutoModal">×</button>
+      </div>
+      <form id="autoCrearForm">
+        <div class="form-group">
+          <label for="cantidadMesas">Cantidad de Mesas a Crear</label>
+          <input type="number" id="cantidadMesas" required min="1" max="50" value="10" />
+        </div>
+        <div class="form-group">
+          <label for="numeroInicial">Número Inicial</label>
+          <input type="number" id="numeroInicial" required min="1" value="1" />
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="cancelAutoModal">
+            Cancelar
+          </button>
+          <button type="submit" class="btn" id="submitAutoBtn">
+            <span id="autoSubmitText">Crear Mesas</span>
+            <span id="autoSubmitLoading" class="loading" style="display: none"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>© 2025 La cayetana - Sistema de Gestión para Restaurantes</p>
+    </div>
+  </footer>
+
+  <script>
+    // Inicializar Supabase
+    const SUPABASE_URL = "https://ouglkdanbxomammpqhmc.supabase.co";
+    const SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91Z2xrZGFuYnhvbWFtbXBxaG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0OTc2NjUsImV4cCI6MjA3NDA3MzY2NX0.MV2IJ8LGCASbf6qgZuIkQ_CWl0i-w9UcmrlyUb1E4WI";
+
+    const supabaseClient = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+    // Elementos DOM
+    const themeToggle = document.getElementById("themeToggle");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const userRoleSpan = document.getElementById("userRole");
+    const mesasGrid = document.getElementById("mesasGrid");
+    const totalMesas = document.getElementById("totalMesas");
+    const mesasLibres = document.getElementById("mesasLibres");
+    const mesasOcupadas = document.getElementById("mesasOcupadas");
+    const crearMesaBtn = document.getElementById("crearMesaBtn");
+    const autoCrearBtn = document.getElementById("autoCrearBtn");
+    const deleteMesaBtn = document.getElementById("deleteMesaBtn");
+
+    // Modales
+    const mesaModal = document.getElementById("mesaModal");
+    const autoCrearModal = document.getElementById("autoCrearModal");
+    const mesaForm = document.getElementById("mesaForm");
+    const autoCrearForm = document.getElementById("autoCrearForm");
+    const confirmDelete = document.getElementById("confirmDelete");
+
+    // Variables de estado
+    let currentUser = null;
+    let mesas = [];
+    let deleteConfirmVisible = false;
+
+    // Inicializar la aplicación
+    async function init() {
+      // Verificar autenticación
+      const {
+        data: { session },
+      } = await supabaseClient.auth.getSession();
+      if (!session) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      // Cargar datos de usuario
+      const userData = JSON.parse(localStorage.getItem("user"));
+      if (userData) {
+        currentUser = userData;
+        userRoleSpan.textContent = userData.role;
+
+        // Mostrar/ocultar botones según rol
+        if (userData.role === "admin") {
+          document.querySelectorAll(".admin-only").forEach((el) => {
+            el.classList.remove("hidden");
+          });
+        }
+      }
+
+      // Cargar mesas
+      await cargarMesas();
+
+      // Configurar event listeners
+      configurarEventListeners();
+
+      // Verificar tema
+      if (localStorage.getItem("theme") === "dark") {
+        document.body.classList.add("dark-theme");
+        themeToggle.textContent = "☀️";
+      }
+    }
+
+    // Cargar mesas desde Supabase
+    async function cargarMesas() {
+      try {
+        const { data, error } = await supabaseClient
+          .from("mesas")
+          .select("*")
+          .order("numero", { ascending: true });
+
+        if (error) throw error;
+
+        mesas = data || [];
+        renderizarMesas();
+        actualizarEstadisticas();
+      } catch (error) {
+        console.error("Error cargando mesas:", error);
+        mostrarError("Error al cargar las mesas");
+      }
+    }
+
+    // Renderizar mesas en la cuadrícula
+    function renderizarMesas() {
+      mesasGrid.innerHTML = "";
+
+      mesas.forEach((mesa) => {
+        const mesaCard = document.createElement("div");
+        mesaCard.className = `mesa-card ${mesa.ocupado ? "ocupada" : "libre"
+          }`;
+        mesaCard.innerHTML = `
+                    <div class="mesa-numero">${mesa.numero}</div>
+                    <div class="mesa-estado ${mesa.ocupado ? "estado-ocupada" : "estado-libre"
+          }">
+                        ${mesa.ocupado ? "Ocupada" : "Libre"}
+                    </div>
+                    <div class="mesa-info">
+                        ${mesa.ocupado ? "🕒 Ocupada" : "✅ Disponible"}
+                    </div>
+                `;
+
+        // Solo admin puede editar mesas
+        if (currentUser && currentUser.role === "admin") {
+          mesaCard.addEventListener("click", () => abrirModalMesa(mesa));
+        } else {
+          mesaCard.style.cursor = "default";
+        }
+
+        mesasGrid.appendChild(mesaCard);
+      });
+    }
+
+    // Actualizar estadísticas
+    function actualizarEstadisticas() {
+      totalMesas.textContent = mesas.length;
+      mesasLibres.textContent = mesas.filter((m) => !m.ocupado).length;
+      mesasOcupadas.textContent = mesas.filter((m) => m.ocupado).length;
+    }
+
+    // Abrir modal para editar/crear mesa
+    function abrirModalMesa(mesa = null) {
+      const modalTitle = document.getElementById("modalTitle");
+      const mesaId = document.getElementById("mesaId");
+      const mesaNumero = document.getElementById("mesaNumero");
+      const mesaEstado = document.getElementById("mesaEstado");
+
+      if (mesa) {
+        modalTitle.textContent = "Editar Mesa";
+        mesaId.value = mesa.id;
+        mesaNumero.value = mesa.numero;
+        mesaEstado.value = mesa.ocupado.toString();
+
+        // Mostrar botón de eliminar solo para mesas existentes
+        deleteMesaBtn.classList.remove("hidden");
+        deleteConfirmVisible = false;
+        confirmDelete.style.display = "none";
+      } else {
+        modalTitle.textContent = "Crear Mesa";
+        mesaId.value = "";
+        mesaNumero.value = "";
+        mesaEstado.value = "false";
+
+        // Ocultar botón de eliminar para nuevas mesas
+        deleteMesaBtn.classList.add("hidden");
+      }
+
+      mesaModal.style.display = "flex";
+    }
+
+    // Configurar event listeners
+    function configurarEventListeners() {
+      // Tema toggle
+      themeToggle.addEventListener("click", toggleTema);
+
+      // Logout
+      logoutBtn.addEventListener("click", cerrarSesion);
+
+      // Botones de crear mesa (solo para admin)
+      if (currentUser && currentUser.role === "admin") {
+        crearMesaBtn.addEventListener("click", () => abrirModalMesa());
+        autoCrearBtn.addEventListener("click", () => {
+          autoCrearModal.style.display = "flex";
+        });
+      }
+
+      // Cerrar modales
+      document
+        .getElementById("closeModal")
+        .addEventListener("click", cerrarModales);
+      document
+        .getElementById("cancelModal")
+        .addEventListener("click", cerrarModales);
+      document
+        .getElementById("closeAutoModal")
+        .addEventListener("click", cerrarModales);
+      document
+        .getElementById("cancelAutoModal")
+        .addEventListener("click", cerrarModales);
+
+      // Forms
+      mesaForm.addEventListener("submit", guardarMesa);
+      autoCrearForm.addEventListener("submit", autoCrearMesas);
+
+      // Eliminar mesa
+      deleteMesaBtn.addEventListener("click", toggleConfirmDelete);
+      document
+        .getElementById("confirmDeleteYes")
+        .addEventListener("click", eliminarMesa);
+      document
+        .getElementById("confirmDeleteNo")
+        .addEventListener("click", toggleConfirmDelete);
+
+      // Cerrar modal al hacer clic fuera
+      window.addEventListener("click", (e) => {
+        if (e.target === mesaModal) cerrarModales();
+        if (e.target === autoCrearModal) cerrarModales();
+      });
+    }
+
+    // Toggle tema claro/oscuro
+    function toggleTema() {
+      document.body.classList.toggle("dark-theme");
+      if (document.body.classList.contains("dark-theme")) {
+        localStorage.setItem("theme", "dark");
+        themeToggle.textContent = "☀️";
+      } else {
+        localStorage.setItem("theme", "light");
+        themeToggle.textContent = "🌙";
+      }
+    }
+
+    // Cerrar sesión
+    async function cerrarSesion() {
+      await supabaseClient.auth.signOut();
+      localStorage.removeItem("user");
+      window.location.href = "index.html";
+    }
+
+    // Cerrar modales
+    function cerrarModales() {
+      mesaModal.style.display = "none";
+      autoCrearModal.style.display = "none";
+      deleteConfirmVisible = false;
+      confirmDelete.style.display = "none";
+    }
+
+    // Toggle confirmación de eliminación
+    function toggleConfirmDelete() {
+      deleteConfirmVisible = !deleteConfirmVisible;
+      confirmDelete.style.display = deleteConfirmVisible ? "block" : "none";
+    }
+
+    // Guardar mesa (crear o actualizar)
+    async function guardarMesa(e) {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById("submitMesaBtn");
+      const submitText = document.getElementById("submitText");
+      const submitLoading = document.getElementById("submitLoading");
+
+      submitText.style.display = "none";
+      submitLoading.style.display = "inline-block";
+      submitBtn.disabled = true;
+
+      try {
+        const mesaId = document.getElementById("mesaId").value;
+        const numero = parseInt(document.getElementById("mesaNumero").value);
+        const ocupado =
+          document.getElementById("mesaEstado").value === "true";
+
+        // Validar número único
+        const mesaExistente = mesas.find(
+          (m) => m.numero === numero && m.id !== parseInt(mesaId)
+        );
+        if (mesaExistente) {
+          throw new Error("Ya existe una mesa con este número");
+        }
+
+        if (mesaId) {
+          // Actualizar mesa existente
+          const { error } = await supabaseClient
+            .from("mesas")
+            .update({ numero, ocupado })
+            .eq("id", mesaId);
+
+          if (error) throw error;
+        } else {
+          // Crear nueva mesa
+          const { error } = await supabaseClient
+            .from("mesas")
+            .insert([{ numero, ocupado }]);
+
+          if (error) throw error;
+        }
+
+        await cargarMesas();
+        cerrarModales();
+        mesaForm.reset();
+      } catch (error) {
+        console.error("Error guardando mesa:", error);
+        mostrarError(error.message);
+      } finally {
+        submitText.style.display = "inline-block";
+        submitLoading.style.display = "none";
+        submitBtn.disabled = false;
+      }
+    }
+
+    // Función para encontrar el próximo número disponible
+    function encontrarProximoNumeroDisponible() {
+      if (mesas.length === 0) return 1;
+
+      const numerosExistentes = mesas
+        .map((m) => m.numero)
+        .sort((a, b) => a - b);
+      let proximoNumero = 1;
+
+      for (let i = 0; i < numerosExistentes.length; i++) {
+        if (numerosExistentes[i] > proximoNumero) {
+          break;
+        }
+        proximoNumero = numerosExistentes[i] + 1;
+      }
+
+      return proximoNumero;
+    }
+
+    // Auto crear múltiples mesas
+    async function autoCrearMesas(e) {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById("submitAutoBtn");
+      const submitText = document.getElementById("autoSubmitText");
+      const submitLoading = document.getElementById("autoSubmitLoading");
+
+      submitText.style.display = "none";
+      submitLoading.style.display = "inline-block";
+      submitBtn.disabled = true;
+
+      try {
+        const cantidad = parseInt(
+          document.getElementById("cantidadMesas").value
+        );
+        let numeroInicial = parseInt(
+          document.getElementById("numeroInicial").value
+        );
+
+        if (cantidad > 50) {
+          throw new Error("No se pueden crear más de 50 mesas a la vez");
+        }
+
+        // Si no se especifica número inicial, encontrar el próximo disponible
+        if (!numeroInicial || isNaN(numeroInicial)) {
+          numeroInicial = encontrarProximoNumeroDisponible();
+          document.getElementById("numeroInicial").value = numeroInicial;
+        }
+
+        // Crear array de mesas con números únicos
+        const nuevasMesas = [];
+        let numeroActual = numeroInicial;
+        let mesasCreadas = 0;
+
+        while (mesasCreadas < cantidad) {
+          // Verificar si el número ya existe
+          const numeroExiste = mesas.some((m) => m.numero === numeroActual);
+
+          if (!numeroExiste) {
+            nuevasMesas.push({
+              numero: numeroActual,
+              ocupado: false,
+            });
+            mesasCreadas++;
+          }
+
+          numeroActual++;
+
+          // Prevenir bucle infinito
+          if (numeroActual > numeroInicial + 100) {
+            throw new Error(
+              "No se pudieron encontrar números disponibles suficientes"
+            );
+          }
+        }
+
+        if (nuevasMesas.length === 0) {
+          throw new Error(
+            "Todos los números ya existen. No se crearon mesas nuevas."
+          );
+        }
+
+        // Insertar mesas de una en una para manejar errores individualmente
+        let mesasInsertadas = 0;
+        let errores = [];
+
+        for (const mesa of nuevasMesas) {
+          try {
+            const { error } = await supabaseClient.from("mesas").insert([mesa]);
+
+            if (error) {
+              errores.push(`Mesa ${mesa.numero}: ${error.message}`);
+            } else {
+              mesasInsertadas++;
+            }
+          } catch (error) {
+            errores.push(`Mesa ${mesa.numero}: ${error.message}`);
+          }
+        }
+
+        if (errores.length > 0) {
+          console.warn("Algunas mesas no se pudieron crear:", errores);
+        }
+
+        if (mesasInsertadas > 0) {
+          await cargarMesas();
+          mostrarExito(`Se crearon ${mesasInsertadas} mesas correctamente`);
+        }
+
+        if (errores.length > 0) {
+          mostrarError(
+            `Algunas mesas no se pudieron crear: ${errores.join(", ")}`
+          );
+        }
+
+        cerrarModales();
+        autoCrearForm.reset();
+      } catch (error) {
+        console.error("Error creando mesas:", error);
+        mostrarError(error.message);
+      } finally {
+        submitText.style.display = "inline-block";
+        submitLoading.style.display = "none";
+        submitBtn.disabled = false;
+      }
+    }
+
+    // Eliminar mesa
+    async function eliminarMesa() {
+      const mesaId = document.getElementById("mesaId").value;
+      const submitBtn = document.getElementById("submitMesaBtn");
+
+      if (!mesaId) return;
+
+      // Deshabilitar botones durante la operación
+      submitBtn.disabled = true;
+      deleteMesaBtn.disabled = true;
+
+      try {
+        const mesa = mesas.find((m) => m.id === parseInt(mesaId));
+        if (!mesa) {
+          throw new Error("Mesa no encontrada");
+        }
+
+        // Verificar si la mesa está ocupada
+        if (mesa.ocupado) {
+          throw new Error("No se puede eliminar una mesa ocupada");
+        }
+
+        // Confirmación final del usuario
+        if (
+          !confirm(
+            "¿Estás seguro de que quieres eliminar la Mesa " +
+            mesa.numero +
+            " permanentemente?"
+          )
+        ) {
+          return;
+        }
+
+        // Eliminar la mesa
+        const { error } = await supabaseClient
+          .from("mesas")
+          .delete()
+          .eq("id", mesaId);
+
+        if (error) throw error;
+
+        // Recargar mesas y cerrar modal
+        await cargarMesas();
+        cerrarModales();
+        mostrarExito("Mesa eliminada correctamente");
+      } catch (error) {
+        console.error("Error eliminando mesa:", error);
+        mostrarError(error.message);
+      } finally {
+        submitBtn.disabled = false;
+        deleteMesaBtn.disabled = false;
+        toggleConfirmDelete(); // Ocultar confirmación
+      }
+    }
+
+    // Mostrar error
+    function mostrarError(mensaje) {
+      alert(`Error: ${mensaje}`);
+    }
+
+    // Mostrar éxito
+    function mostrarExito(mensaje) {
+      alert(`✅ ${mensaje}`);
+    }
+
+    // Inicializar la aplicación
+    init();
+
+    // Suscribirse a cambios en tiempo real
+    const subscription = supabase
+      .channel("mesas-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "mesas" },
+        () => {
+          cargarMesas();
+        }
+      )
+      .subscribe();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Cayetana - Finalizar Cuenta</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="shortcut icon" href="logocaye.png" />
+    <link rel="stylesheet" href="css/finalizar.css" />
+</head>
+
+<body>
+    <header>
+        <div class="container header-content">
+            <a href="main.html" class="logo">
+                <img src="./titulo-doublebass.png" alt="Título con fuente Doublebass" height="50px" />
+            </a>
+            <div class="nav-buttons">
+                <span id="userRole">Mesero</span>
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+                <a href="pedidos.html" class="btn btn-secondary">Volver al Pedido</a>
+                <button class="btn btn-danger" id="logoutBtn">Cerrar Sesión</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">Finalizar Cuenta</h1>
+                <div class="info-cuenta" id="infoCuenta">
+                    <!-- Información de la cuenta se cargará aquí -->
+                </div>
+            </div>
+
+            <div class="configuracion-cuenta">
+                <div class="config-group">
+                    <label for="vistaCuenta">Vista de cuenta:</label>
+                    <select id="vistaCuenta">
+                        <option value="separada">Cuentas Separadas</option>
+                        <option value="junta">Cuenta Junta</option>
+                    </select>
+                </div>
+                <div class="config-group">
+                    <label for="tipoTicket">Tipo de ticket:</label>
+                    <select id="tipoTicket">
+                        <option value="individual">Individual por persona</option>
+                        <option value="general">General de la mesa</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="resumen-cuenta">
+                <h2>Resumen de la Cuenta</h2>
+                <div class="detalle-items" id="detalleItems">
+                    <!-- Items se cargarán aquí -->
+                </div>
+                <div class="total-section">
+                    <span>Total General:</span>
+                    <span>$<span id="totalCuenta">0.00</span></span>
+                </div>
+            </div>
+
+            <div class="metodo-pago">
+                <h2>Método de Pago</h2>
+                <div class="opciones-pago">
+                    <div class="opcion-pago" data-metodo="efectivo">
+                        💵 Efectivo
+                    </div>
+                    <div class="opcion-pago" data-metodo="tarjeta">
+                        💳 Tarjeta
+                    </div>
+                    <div class="opcion-pago" data-metodo="hibrido">
+                        🔄 Híbrido
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="notasFinales">Notas adicionales:</label>
+                    <textarea id="notasFinales" placeholder="Notas para la cuenta..."></textarea>
+                </div>
+            </div>
+
+            <div class="acciones-finales">
+                <button class="btn btn-info" id="imprimirBtn">...</button>
+                <button class="btn btn-info" id="previsualizarBtn">🖨️ Imprimir Ticket</button>
+                <button class="btn btn-success" id="finalizarBtn">✅ Finalizar Cuenta</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="finalizar.js"></script>
+</body>
+
+</html>

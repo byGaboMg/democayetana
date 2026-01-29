@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La cayetana - Inicio de Sesión</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="shortcut icon" href="logocaye.png" />
+    <style>
+        :root {
+            --primary-color: #fb74a2;
+            --primary-dark: #e05a8a;
+            --text-color: #333;
+            --bg-color: #f9f9f9;
+            --card-bg: #ffffff;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+        }
+
+        .dark-theme {
+            --primary-color: #fb74a2;
+            --primary-dark: #ff96b8;
+            --text-color: #f0f0f0;
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            width: 100%;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 1rem 0;
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+            padding: 2rem 0;
+        }
+
+        .login-card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 2rem;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-card h2 {
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .error-message {
+            color: #e74c3c;
+            margin-top: 1rem;
+            padding: 10px;
+            background-color: rgba(231, 76, 60, 0.1);
+            border-radius: 8px;
+            display: none;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, .3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: auto;
+            background-color: var(--card-bg);
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .login-card {
+                padding: 1.5rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container header-content">
+            <div class="logo">
+                <img src="./titulo-doublebass.png" alt="Título con fuente Doublebass" height="50px" />
+            </div>
+            <button class="theme-toggle" id="themeToggle">🌙</button>
+        </div>
+    </header>
+
+    <main class="login-container">
+        <div class="container">
+            <div class="login-card">
+                <h2>Iniciar Sesión</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="email">Correo Electrónico</label>
+                        <input type="email" id="email" required placeholder="tu@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Contraseña</label>
+                        <input type="password" id="password" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn" id="loginBtn">
+                        <span id="btnText">Ingresar</span>
+                        <span id="btnLoading" class="loading" style="display: none;"></span>
+                    </button>
+                    <div class="error-message" id="errorMessage"></div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>© 2025 La cayetana - Sistema de Gestión para Restaurantes</p>
+        </div>
+    </footer>
+
+    <script>
+        // Inicializar Supabase - REEMPLAZA CON TUS CREDENCIALES
+        const SUPABASE_URL = 'https://ouglkdanbxomammpqhmc.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91Z2xrZGFuYnhvbWFtbXBxaG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0OTc2NjUsImV4cCI6MjA3NDA3MzY2NX0.MV2IJ8LGCASbf6qgZuIkQ_CWl0i-w9UcmrlyUb1E4WI';
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Elementos DOM
+        const loginForm = document.getElementById('loginForm');
+        const errorMessage = document.getElementById('errorMessage');
+        const themeToggle = document.getElementById('themeToggle');
+        const loginBtn = document.getElementById('loginBtn');
+        const btnText = document.getElementById('btnText');
+        const btnLoading = document.getElementById('btnLoading');
+
+        // Verificar tema guardado
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-theme');
+            themeToggle.textContent = '☀️';
+        }
+
+        // Alternar tema claro/oscuro
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            if (document.body.classList.contains('dark-theme')) {
+                localStorage.setItem('theme', 'dark');
+                themeToggle.textContent = '☀️';
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeToggle.textContent = '🌙';
+            }
+        });
+
+        // Función para mostrar/ocultar loading
+        function setLoading(loading) {
+            if (loading) {
+                btnText.style.display = 'none';
+                btnLoading.style.display = 'inline-block';
+                loginBtn.disabled = true;
+            } else {
+                btnText.style.display = 'inline-block';
+                btnLoading.style.display = 'none';
+                loginBtn.disabled = false;
+            }
+        }
+
+        // Función para mostrar errores
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        // Manejar inicio de sesión
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            setLoading(true);
+
+            try {
+                // 1. Iniciar sesión con Supabase Auth
+                const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+                    email,
+                    password
+                });
+
+                if (authError) {
+                    throw new Error(authError.message);
+                }
+
+                // Pequeña pausa para asegurar que la sesión esté establecida
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // 2. Obtener o crear perfil del usuario
+                let userProfile = null;
+
+                try {
+                    // Intentar obtener perfil existente
+                    const { data: profileData, error: profileError } = await supabaseClient
+                        .from('perfiles')
+                        .select('role, nombre')
+                        .eq('id', authData.user.id)
+                        .single();
+
+                    if (profileError) {
+                        console.warn('Error al obtener perfil, creando uno nuevo...', profileError);
+
+                        // Crear nuevo perfil si no existe
+                        const { data: newProfile, error: insertError } = await supabaseClient
+                            .from('perfiles')
+                            .insert([
+                                {
+                                    id: authData.user.id,
+                                    nombre: authData.user.email.split('@')[0],
+                                    role: 'mesero'
+                                }
+                            ])
+                            .select()
+                            .single();
+
+                        if (insertError) {
+                            console.error('Error creando perfil:', insertError);
+                            // Usar valores por defecto si falla la creación
+                            userProfile = {
+                                nombre: authData.user.email.split('@')[0],
+                                role: 'mesero'
+                            };
+                        } else {
+                            userProfile = newProfile;
+                        }
+                    } else {
+                        userProfile = profileData;
+                    }
+                } catch (profileError) {
+                    console.error('Error en proceso de perfil:', profileError);
+                    // Fallback: usar valores por defecto
+                    userProfile = {
+                        nombre: authData.user.email.split('@')[0],
+                        role: 'mesero'
+                    };
+                }
+
+                // 3. Guardar información de usuario
+                localStorage.setItem('user', JSON.stringify({
+                    id: authData.user.id,
+                    email: authData.user.email,
+                    nombre: userProfile.nombre,
+                    role: userProfile.role
+                }));
+
+                // 4. Redirigir a la página principal
+                window.location.href = 'main.html';
+
+            } catch (error) {
+                console.error('Error al iniciar sesión:', error);
+                showError(error.message || 'Error al iniciar sesión. Verifica tus credenciales.');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Verificar si ya hay una sesión activa y redirigir
+        supabaseClient.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                window.location.href = 'main.html';
+            }
+        });
+
+        // Manejar errores de Supabase en tiempo real
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT') {
+                localStorage.removeItem('user');
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La cayetana - Gestión de Menú</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="shortcut icon" href="logocaye.png" />
+    <style>
+        :root {
+            --primary-color: #fb74a2;
+            --primary-dark: #e05a8a;
+            --text-color: #333;
+            --bg-color: #f9f9f9;
+            --card-bg: #ffffff;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+        }
+
+        .dark-theme {
+            --primary-color: #fb74a2;
+            --primary-dark: #ff96b8;
+            --text-color: #f0f0f0;
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            width: 100%;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 1rem 0;
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo img {
+            height: 50px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        .main-content {
+            padding: 2rem 0;
+            flex-grow: 1;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .page-title {
+            color: var(--primary-color);
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .search-bar button {
+            white-space: nowrap;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+        }
+
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: white;
+        }
+
+        .dark-theme .filter-group select {
+            background-color: #333;
+            color: white;
+            border-color: #555;
+        }
+
+        .table-container {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .platillos-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .platillos-table th,
+        .platillos-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .dark-theme .platillos-table th,
+        .dark-theme .platillos-table td {
+            border-bottom: 1px solid #444;
+        }
+
+        .platillos-table th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        .platillos-table tr:hover {
+            background-color: rgba(251, 116, 162, 0.1);
+        }
+
+        .precio {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .modal-title {
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            position: absolute;
+            top: -10px;
+            right: -10px;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, .3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .dark-theme .empty-state {
+            color: #ccc;
+        }
+
+        .categoria-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            background-color: #e9ecef;
+            color: #495057;
+        }
+
+        .dark-theme .categoria-badge {
+            background-color: #444;
+            color: #ddd;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: auto;
+            background-color: var(--card-bg);
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .nav-buttons {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-bar {
+                flex-direction: column;
+            }
+
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .platillos-table {
+                display: block;
+                overflow-x: auto;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .modal-content {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+
+            .close-modal {
+                top: -5px;
+                right: -5px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container header-content">
+            <a href="main.html" class="logo">
+                <img src="./titulo-doublebass.png" alt="Título con fuente Doublebass" height="50px" />
+            </a>
+            <div class="nav-buttons">
+                <span id="userRole">Administrador</span>
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+                <a href="main.html" class="btn btn-secondary">Volver</a>
+                <button class="btn btn-danger" id="logoutBtn">Cerrar Sesión</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">Gestión de Menú</h1>
+                <button class="btn btn-success" id="nuevoPlatilloBtn">Nuevo Platillo</button>
+            </div>
+
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Buscar platillos...">
+                <button class="btn" id="searchBtn">Buscar</button>
+            </div>
+
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="filterEstado">Estado:</label>
+                    <select id="filterEstado">
+                        <option value="todos">Todos</option>
+                        <option value="activo">Activos</option>
+                        <option value="inactivo">Inactivos</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterCategoria">Categoría:</label>
+                    <select id="filterCategoria">
+                        <option value="todos">Todas</option>
+                        <option value="desayunos">Desayunos</option>
+                        <option value="comidas">Comidas</option>
+                        <option value="antojitos">Antojitos</option>
+                        <option value="burritos">Burritos</option>
+                        <option value="sandwiches">Sandwiches</option>
+                        <option value="hamburguesas">Hamburguesas</option>
+                        <option value="ensaladas">Ensaladas</option>
+                        <option value="montaditos">Montaditos</option>
+                        <option value="especiales">Especiales</option>
+                        <option value="carta">Carta</option>
+                        <option value="baguettes">Baguettes</option>
+                        <option value="hotdogs">Hot Dogs</option>
+                        <option value="taquitos">Taquitos</option>
+                        <option value="tacos">Tacos</option>
+                        <option value="sincronizadas">Sincronizadas</option>
+
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="sortBy">Ordenar por:</label>
+                    <select id="sortBy">
+                        <option value="nombre">Nombre</option>
+                        <option value="precio">Precio</option>
+                        <option value="fecha">Fecha</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="platillos-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Precio</th>
+                            <th>Categoría</th>
+                            <th>Estado</th>
+                            <th>Fecha Creación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="platillosTableBody">
+                        <!-- Los platillos se cargarán dinámicamente aquí -->
+                    </tbody>
+                </table>
+                <div class="empty-state hidden" id="emptyState">
+                    <p>No se encontraron platillos</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal para nuevo/editar platillo -->
+    <div class="modal" id="platilloModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Nuevo Platillo</h2>
+                <button class="close-modal" id="closeModal">×</button>
+            </div>
+            <form id="platilloForm">
+                <input type="hidden" id="platilloId">
+                <div class="form-group">
+                    <label for="platilloNombre">Nombre del Platillo *</label>
+                    <input type="text" id="platilloNombre" required maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label for="platilloPrecio">Precio ($) *</label>
+                    <input type="number" id="platilloPrecio" required min="0" step="0.01" placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label for="platilloCategoria">Categoría *</label>
+                    <select id="platilloCategoria" required>
+                        <option value="">Seleccionar categoría</option>
+                        <option value="desayunos">Desayunos</option>
+                        <option value="comidas">Comidas</option>
+                        <option value="antojitos">Antojitos</option>
+                        <option value="burritos">Burritos</option>
+                        <option value="sandwiches">Sandwiches</option>
+                        <option value="hamburguesas">Hamburguesas</option>
+                        <option value="ensaladas">Ensaladas</option>
+                        <option value="montaditos">Montaditos</option>
+                        <option value="especiales">Especiales</option>
+                        <option value="carta">Carta</option>
+                        <option value="baguettes">Baguettes</option>
+                        <option value="hotdogs">Hot Dogs</option>
+                        <option value="taquitos">Taquitos</option>
+                        <option value="tacos">Tacos</option>
+                        <option value="sincronizadas">Sincronizadas</option>
+
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="platilloDescripcion">Descripción</label>
+                    <textarea id="platilloDescripcion" rows="3" maxlength="500"
+                        placeholder="Descripción del platillo..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="platilloActivo">Estado *</label>
+                    <select id="platilloActivo" required>
+                        <option value="true">Activo</option>
+                        <option value="false">Inactivo</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelModal">Cancelar</button>
+                    <button type="submit" class="btn btn-success" id="submitPlatilloBtn">
+                        <span id="submitText">Crear Platillo</span>
+                        <span id="submitLoading" class="loading" style="display: none;"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación de eliminación -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Confirmar Eliminación</h2>
+                <button class="close-modal" id="closeConfirmModal">×</button>
+            </div>
+            <div class="form-group">
+                <p id="confirmMessage">¿Estás seguro de que quieres eliminar este platillo?</p>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="cancelConfirmModal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>© 2025 La cayetana - Sistema de Gestión para Restaurantes</p>
+        </div>
+    </footer>
+
+    <script>
+        // Inicializar Supabase
+        const SUPABASE_URL = 'https://ouglkdanbxomammpqhmc.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91Z2xrZGFuYnhvbWFtbXBxaG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0OTc2NjUsImV4cCI6MjA3NDA3MzY2NX0.MV2IJ8LGCASbf6qgZuIkQ_CWl0i-w9UcmrlyUb1E4WI';
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Elementos DOM
+        const themeToggle = document.getElementById('themeToggle');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userRoleSpan = document.getElementById('userRole');
+        const nuevoPlatilloBtn = document.getElementById('nuevoPlatilloBtn');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const filterEstado = document.getElementById('filterEstado');
+        const filterCategoria = document.getElementById('filterCategoria');
+        const sortBy = document.getElementById('sortBy');
+        const platillosTableBody = document.getElementById('platillosTableBody');
+        const emptyState = document.getElementById('emptyState');
+
+        // Modales
+        const platilloModal = document.getElementById('platilloModal');
+        const confirmModal = document.getElementById('confirmModal');
+        const platilloForm = document.getElementById('platilloForm');
+
+        // Variables de estado
+        let currentUser = null;
+        let platillos = [];
+        let platilloToDelete = null;
+
+        // Inicializar la aplicación
+        async function init() {
+            // Verificar autenticación
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Cargar datos de usuario
+            const userData = JSON.parse(localStorage.getItem('user'));
+            if (userData) {
+                currentUser = userData;
+                userRoleSpan.textContent = userData.role;
+
+                // Verificar si es admin
+                if (userData.role !== 'admin') {
+                    mostrarError('No tienes permisos para acceder a esta página');
+                    window.location.href = 'main.html';
+                    return;
+                }
+            }
+
+            // Cargar platillos
+            await cargarPlatillos();
+
+            // Configurar event listeners
+            configurarEventListeners();
+
+            // Verificar tema
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeToggle.textContent = '☀️';
+            }
+        }
+
+        // Cargar platillos desde Supabase
+        async function cargarPlatillos() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('platillos')
+                    .select('*')
+                    .order('nombre', { ascending: true });
+
+                if (error) throw error;
+
+                platillos = data || [];
+                aplicarFiltrosYOrden();
+            } catch (error) {
+                console.error('Error cargando platillos:', error);
+                mostrarError('Error al cargar el menú');
+            }
+        }
+
+        // Aplicar filtros y ordenamiento
+        function aplicarFiltrosYOrden() {
+            let platillosFiltrados = [...platillos];
+
+            // Filtrar por estado
+            const estadoFilter = filterEstado.value || 'activo'; // Por defecto solo activos
+            if (estadoFilter !== 'todos') {
+                platillosFiltrados = platillosFiltrados.filter(p =>
+                    estadoFilter === 'activo' ? p.activo : !p.activo
+                );
+            }
+
+            // Filtrar por categoría
+            const categoriaFilter = filterCategoria.value;
+            if (categoriaFilter !== 'todos') {
+                platillosFiltrados = platillosFiltrados.filter(p =>
+                    p.categoria === categoriaFilter
+                );
+            }
+
+            // Filtrar por búsqueda
+            const searchTerm = searchInput.value.toLowerCase();
+            if (searchTerm) {
+                platillosFiltrados = platillosFiltrados.filter(p =>
+                    p.nombre.toLowerCase().includes(searchTerm) ||
+                    (p.descripcion && p.descripcion.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            // Ordenar
+            const sortField = sortBy.value;
+            platillosFiltrados.sort((a, b) => {
+                switch (sortField) {
+                    case 'precio':
+                        return a.precio - b.precio;
+                    case 'fecha':
+                        return new Date(b.creado_en) - new Date(a.creado_en);
+                    default:
+                        return a.nombre.localeCompare(b.nombre);
+                }
+            });
+
+            renderizarPlatillos(platillosFiltrados);
+        }
+
+        // Renderizar platillos en la tabla
+        function renderizarPlatillos(platillosLista) {
+            platillosTableBody.innerHTML = '';
+
+            if (platillosLista.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            platillosLista.forEach(platillo => {
+                const row = document.createElement('tr');
+
+                // Formatear fecha
+                const fecha = new Date(platillo.creado_en).toLocaleDateString('es-ES', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+
+                // Formatear precio
+                const precio = new Intl.NumberFormat('es-MX', {
+                    style: 'currency',
+                    currency: 'MXN'
+                }).format(platillo.precio);
+
+                // Traducir categoría
+                const categorias = {
+                    'desayunos': 'Desayunos',
+                    'comidas': 'Comidas',
+                    'antojitos': 'Antojitos',
+                    'burritos': 'Burritos',
+                    'sandwiches': 'Sandwiches',
+                    'hamburguesas': 'Hamburguesas',
+                    'ensaladas': 'Ensaladas',
+                    'montaditos': 'Montaditos',
+                    'especiales': 'Especiales',
+                    'carta': 'Carta',
+                    'baguettes': 'Baguettes',
+                    'hotdogs': 'Hot Dogs',
+                    'taquitos': 'Taquitos',
+                    'tacos': 'Tacos',
+                    'sincronizadas': 'Sincronizadas'
+                };
+
+                row.innerHTML = `
+                    <td>
+                        <div><strong>${platillo.nombre}</strong></div>
+                        ${platillo.descripcion ? `<div style="font-size: 0.9rem; color: #666; margin-top: 4px;">${platillo.descripcion}</div>` : ''}
+                    </td>
+                    <td class="precio">${precio}</td>
+                    <td><span class="categoria-badge">${categorias[platillo.categoria] || platillo.categoria}</span></td>
+                    <td>
+                        <span class="status-badge status-${platillo.activo ? 'active' : 'inactive'}">
+                            ${platillo.activo ? 'Activo' : 'Inactivo'}
+                        </span>
+                    </td>
+                    <td>${fecha}</td>
+                    <td class="action-buttons">
+                        <button class="btn btn-warning btn-editar" data-id="${platillo.id}">Editar</button>
+                        <button class="btn btn-danger btn-eliminar" data-id="${platillo.id}">Eliminar</button>
+                    </td>
+                `;
+
+                platillosTableBody.appendChild(row);
+            });
+
+            // Añadir event listeners a los botones
+            document.querySelectorAll('.btn-editar').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.dataset.id;
+                    const platillo = platillos.find(p => p.id === parseInt(id));
+                    if (platillo) abrirModalPlatillo(platillo);
+                });
+            });
+
+            document.querySelectorAll('.btn-eliminar').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.dataset.id;
+                    const platillo = platillos.find(p => p.id === parseInt(id));
+                    if (platillo) confirmarEliminacion(platillo);
+                });
+            });
+        }
+
+        // Abrir modal para editar/crear platillo
+        function abrirModalPlatillo(platillo = null) {
+            const modalTitle = document.getElementById('modalTitle');
+            const platilloId = document.getElementById('platilloId');
+            const platilloNombre = document.getElementById('platilloNombre');
+            const platilloPrecio = document.getElementById('platilloPrecio');
+            const platilloCategoria = document.getElementById('platilloCategoria');
+            const platilloDescripcion = document.getElementById('platilloDescripcion');
+            const platilloActivo = document.getElementById('platilloActivo');
+            const submitText = document.getElementById('submitText');
+
+            if (platillo) {
+                modalTitle.textContent = 'Editar Platillo';
+                platilloId.value = platillo.id;
+                platilloNombre.value = platillo.nombre;
+                platilloPrecio.value = platillo.precio;
+                platilloCategoria.value = platillo.categoria;
+                platilloDescripcion.value = platillo.descripcion || '';
+                platilloActivo.value = platillo.activo.toString();
+                submitText.textContent = 'Actualizar Platillo';
+            } else {
+                modalTitle.textContent = 'Nuevo Platillo';
+                platilloId.value = '';
+                platilloNombre.value = '';
+                platilloPrecio.value = '';
+                platilloCategoria.value = '';
+                platilloDescripcion.value = '';
+                platilloActivo.value = 'true';
+                submitText.textContent = 'Crear Platillo';
+            }
+
+            platilloModal.style.display = 'flex';
+        }
+
+        // Configurar event listeners
+        function configurarEventListeners() {
+            // Tema toggle
+            themeToggle.addEventListener('click', toggleTema);
+
+            // Logout
+            logoutBtn.addEventListener('click', cerrarSesion);
+
+            // Nuevo platillo
+            nuevoPlatilloBtn.addEventListener('click', () => abrirModalPlatillo());
+
+            // Búsqueda y filtros
+            searchBtn.addEventListener('click', () => aplicarFiltrosYOrden());
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') aplicarFiltrosYOrden();
+            });
+
+            filterEstado.addEventListener('change', () => aplicarFiltrosYOrden());
+            filterCategoria.addEventListener('change', () => aplicarFiltrosYOrden());
+            sortBy.addEventListener('change', () => aplicarFiltrosYOrden());
+
+            // Cerrar modales
+            document.getElementById('closeModal').addEventListener('click', cerrarModales);
+            document.getElementById('cancelModal').addEventListener('click', cerrarModales);
+            document.getElementById('closeConfirmModal').addEventListener('click', cerrarModales);
+            document.getElementById('cancelConfirmModal').addEventListener('click', cerrarModales);
+
+            // Forms
+            platilloForm.addEventListener('submit', guardarPlatillo);
+            document.getElementById('confirmDeleteBtn').addEventListener('click', eliminarPlatillo);
+
+            // Cerrar modal al hacer clic fuera
+            window.addEventListener('click', (e) => {
+                if (e.target === platilloModal) cerrarModales();
+                if (e.target === confirmModal) cerrarModales();
+            });
+        }
+
+        // Toggle tema claro/oscuro
+        function toggleTema() {
+            document.body.classList.toggle('dark-theme');
+            if (document.body.classList.contains('dark-theme')) {
+                localStorage.setItem('theme', 'dark');
+                themeToggle.textContent = '☀️';
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeToggle.textContent = '🌙';
+            }
+        }
+
+        // Cerrar sesión
+        async function cerrarSesion() {
+            await supabaseClient.auth.signOut();
+            localStorage.removeItem('user');
+            window.location.href = 'index.html';
+        }
+
+        // Cerrar modales
+        function cerrarModales() {
+            platilloModal.style.display = 'none';
+            confirmModal.style.display = 'none';
+            platilloForm.reset();
+        }
+
+        // Guardar platillo (crear o actualizar)
+        async function guardarPlatillo(e) {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitPlatilloBtn');
+            const submitText = document.getElementById('submitText');
+            const submitLoading = document.getElementById('submitLoading');
+
+            submitText.style.display = 'none';
+            submitLoading.style.display = 'inline-block';
+            submitBtn.disabled = true;
+
+            try {
+                const platilloId = document.getElementById('platilloId').value;
+                const nombre = document.getElementById('platilloNombre').value;
+                const precio = parseFloat(document.getElementById('platilloPrecio').value);
+                const categoria = document.getElementById('platilloCategoria').value;
+                const descripcion = document.getElementById('platilloDescripcion').value;
+                const activo = document.getElementById('platilloActivo').value === 'true';
+
+                // Validaciones
+                if (!nombre || !precio || !categoria) {
+                    throw new Error('Todos los campos obligatorios deben estar completos');
+                }
+
+                if (precio < 0) {
+                    throw new Error('El precio no puede ser negativo');
+                }
+
+                if (platilloId) {
+                    // Actualizar platillo existente
+                    const { error } = await supabaseClient
+                        .from('platillos')
+                        .update({
+                            nombre,
+                            precio,
+                            categoria,
+                            descripcion,
+                            activo
+                        })
+                        .eq('id', platilloId);
+
+                    if (error) throw error;
+
+                    mostrarExito('Platillo actualizado correctamente');
+                } else {
+                    // Crear nuevo platillo
+                    const { error } = await supabaseClient
+                        .from('platillos')
+                        .insert([{
+                            nombre,
+                            precio,
+                            categoria,
+                            descripcion,
+                            activo
+                        }]);
+
+                    if (error) throw error;
+
+                    mostrarExito('Platillo creado correctamente');
+                }
+
+                await cargarPlatillos();
+                cerrarModales();
+
+            } catch (error) {
+                console.error('Error guardando platillo:', error);
+                mostrarError(error.message);
+            } finally {
+                submitText.style.display = 'inline-block';
+                submitLoading.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Confirmar eliminación
+        function confirmarEliminacion(platillo) {
+            platilloToDelete = platillo;
+            document.getElementById('confirmMessage').textContent =
+                `¿Estás seguro de que quieres eliminar el platillo "${platillo.nombre}"?`;
+            confirmModal.style.display = 'flex';
+        }
+
+        // Eliminar platillo (marcar como inactivo)
+        async function eliminarPlatillo() {
+            if (!platilloToDelete) return;
+
+            try {
+                // Actualiza el estado a inactivo
+                const { error } = await supabaseClient
+                    .from('platillos')
+                    .update({ activo: false })
+                    .eq('id', platilloToDelete.id);
+
+                if (error) throw error;
+
+                mostrarExito('Platillo marcado como inactivo');
+                await cargarPlatillos();
+                cerrarModales();
+
+            } catch (error) {
+                console.error('Error marcando platillo como inactivo:', error);
+                mostrarError(error.message);
+            }
+        }
+
+        // Mostrar error
+        function mostrarError(mensaje) {
+            alert(`Error: ${mensaje}`);
+        }
+
+        // Mostrar éxito
+        function mostrarExito(mensaje) {
+            alert(`✅ ${mensaje}`);
+        }
+
+        // Inicializar la aplicación
+        init();
+    </script>
+</body>
+
+</html>
