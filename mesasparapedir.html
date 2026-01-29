@@ -14,7 +14,7 @@
     <header>
         <div class="container header-content">
             <a href="main.html" class="logo">
-                <img src="/titulo-doublebass.png" alt="Título con fuente Doublebass" height="50px" />
+                <img src="titulo-doublebass.png" alt="Título con fuente Doublebass" height="50px" />
             </a>
             <div class="nav-buttons">
                 <span id="userRole">Mesero</span>
@@ -223,7 +223,7 @@
                 mesaCard.className = `mesa-card ${mesa.ocupado ? 'ocupada' : 'libre'}`;
 
                 mesaCard.innerHTML = `
-    <img class="mesa-visual" src="${mesa.ocupado ? '/mesita3.png' : '/mesita2.png'}" 
+    <img class="mesa-visual" src="${mesa.ocupado ? 'mesita3.png' : 'mesita2.png'}" 
          alt="${mesa.ocupado ? 'Mesa ocupada' : 'Mesa libre'}">
     <div class="mesa-numero">${mesa.numero}</div>
     <div class="mesa-estado ${mesa.ocupado ? 'estado-ocupada' : 'estado-libre'}">
@@ -341,3 +341,4 @@
 
 
 </html>
+
